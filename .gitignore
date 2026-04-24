@@ -1,0 +1,31 @@
+# 环境变量（不能上传）
+backend/.env
+frontend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+backend/venv/
+.venv/
+
+# 日志
+logs/
+*.log
+
+# 数据库
+*.sqlite
+
+# Node
+node_modules/
+frontend/dist/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Alembic不需要上传的内容
+backend/migrations/versions/*.pyc
