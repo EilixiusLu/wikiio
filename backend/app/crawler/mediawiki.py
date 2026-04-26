@@ -13,7 +13,7 @@ class MediaWikiClient:
         self.delay = 1.0 / requests_per_second
         self._last_request_time = 0.0
         self.headers = {
-                "User-Agent": "Wikiio/0.1 (Wiki data analysis platform; polite crawler)"
+                "User-Agent": "Wikiio/0.1 (Wiki data analysis platform; dec_verniy@hotmail.com; polite crawler)"
         }
 
     async def _request(self, params: dict) -> Optional[dict]:

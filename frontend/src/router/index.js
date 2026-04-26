@@ -7,10 +7,10 @@ const router = createRouter({
     { path: '/login', component: () => import('../views/Login.vue') },
     { path: '/register', component: () => import('../views/Register.vue') },
     { path: '/profile', component: () => import('../views/Profile.vue'), meta: { requiresAuth: true } },
+    { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
   ],
 })
 
-// 路由守卫：需要登录的页面，未登录自动跳转到登录页
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('access_token')
   if (to.meta.requiresAuth && !token) {

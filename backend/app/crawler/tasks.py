@@ -69,11 +69,20 @@ async def crawl_single_page(
     if not revisions:
         return
 
-    first_rev = revisions[0]
-    wikitext = first_rev.get("*", "") or first_rev.get("content", "") or ""
-    author = first_rev.get("user", "")
-    author_id = first_rev.get("userid", None)
-    last_edited = first_rev.get("timestamp", None)
+    # revisions[0]是最新版本（rvlimit=1获取的），用于获取当前内容
+    latest_rev = revisions[0]
+    wikitext = latest_rev.get("*", "") or latest_rev.get("content", "") or ""
+    last_edited = latest_rev.get("timestamp", None)
+
+    # 获取完整历史的第一条来确定真正的作者
+    all_revisions_for_author = await client.get_page_revisions(title)
+    if all_revisions_for_author:
+        first_rev = all_revisions_for_author[0]  # 最早的版本
+        author = first_rev.get("user", "")
+        author_id = first_rev.get("userid", None)
+    else:
+        author = latest_rev.get("user", "")
+        author_id = latest_rev.get("userid", None)
 
     cat_list = [c["title"].replace("Category:", "") for c in categories]
     categories_json = json.dumps(cat_list, ensure_ascii=False)
@@ -114,8 +123,7 @@ async def crawl_single_page(
         db.add(db_page)
         await db.flush()
 
-    all_revisions = await client.get_page_revisions(title)
-    for rev in all_revisions:
+    for rev in all_revisions_for_author:
         result = await db.execute(
             select(Revision).where(
                 Revision.site_id == site.site_id,
