@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import auth, users
+from app.routers import auth, users, sites, pages
 
 app = FastAPI(
     title="Wikiio API",
@@ -16,9 +16,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册路由
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
+app.include_router(sites.router, prefix="/api/v1")
+app.include_router(pages.router, prefix="/api/v1")
 
 @app.get("/")
 async def root():
