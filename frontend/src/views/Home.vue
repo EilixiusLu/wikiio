@@ -7,6 +7,15 @@
         <a href="/register" class="btn-primary">立即注册</a>
         <a href="/login" class="btn-secondary">登录</a>
       </div>
+      <div class="search-quick">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="搜索页面..."
+          @keyup.enter="goSearch"
+        />
+        <button @click="goSearch">搜索</button>
+      </div>
     </div>
 
     <div class="content">
@@ -135,6 +144,15 @@ onMounted(async () => {
     console.error(e)
   }
 })
+
+const searchQuery = ref('')
+function goSearch() {
+  if (searchQuery.value.trim()) {
+    router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
+  } else {
+    router.push('/search')
+  }
+}
 </script>
 
 <style scoped>
@@ -246,4 +264,8 @@ onMounted(async () => {
   margin-top: 0.5rem;
 }
 .loading { text-align: center; color: #888; padding: 2rem; }
+
+.search-quick { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+.search-quick input { flex: 1; padding: 0.6rem 1rem; border: none; border-radius: 4px; font-size: 1rem; }
+.search-quick button { padding: 0.6rem 1.2rem; background: #4a3f8f; color: white; border: 2px solid white; border-radius: 4px; cursor: pointer; }
 </style>

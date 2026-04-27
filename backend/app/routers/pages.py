@@ -157,6 +157,7 @@ async def get_page(
         "rating_avg": page.rating_avg,
         "last_edited_at": page.last_edited_at,
         "first_crawled_at": page.first_crawled_at,
+        "wikitext": page.wikitext or "",
         "recent_revisions": [
             {
                 "rev_id": r.rev_id,

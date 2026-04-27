@@ -8,6 +8,7 @@ const router = createRouter({
     { path: '/register', component: () => import('../views/Register.vue') },
     { path: '/profile', component: () => import('../views/Profile.vue'), meta: { requiresAuth: true } },
     { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
+    { path: '/search', component: () => import('../views/Search.vue') },
   ],
 })
 

@@ -1,14 +1,18 @@
 <template>
   <div class="detail-page">
-    <div class="back" @click="router.back()">← 返回</div>
+    <div class="topbar">
+      <span class="back" @click="router.back()">← 返回</span>
+      <a v-if="page" :href="wikiUrl" target="_blank" class="wiki-link">在维基上查看 →</a>
+    </div>
 
     <div v-if="loading" class="loading">加载中...</div>
 
-    <div v-else-if="page" class="content">
-      <div class="main-card">
+    <div v-else-if="page">
+      <!-- 基本信息卡片 -->
+      <div class="card">
         <h1>{{ page.title }}</h1>
         <div class="meta">
-          <span>作者：{{ page.author || '未知' }}</span>
+          <span>作者：<b>{{ page.author || '未知' }}</b></span>
           <span>字数：{{ page.word_count }}</span>
           <span>最后编辑：{{ formatDate(page.last_edited_at) }}</span>
         </div>
@@ -24,13 +28,25 @@
         </div>
       </div>
 
-      <div class="side-card">
-        <h3>最近编辑历史</h3>
+      <!-- 编辑历史卡片 -->
+      <div class="card">
+        <h2>编辑历史</h2>
         <div class="rev-item" v-for="rev in page.recent_revisions" :key="rev.rev_id">
-          <div class="rev-editor">{{ rev.editor }}</div>
+          <div class="rev-row">
+            <span class="rev-editor">{{ rev.editor }}</span>
+            <span class="rev-time">{{ formatDate(rev.timestamp) }}</span>
+          </div>
           <div class="rev-comment">{{ rev.comment || '（无编辑摘要）' }}</div>
-          <div class="rev-time">{{ formatDate(rev.timestamp) }}</div>
         </div>
+      </div>
+
+      <!-- Wikitext 源代码卡片 -->
+      <div class="card">
+        <div class="wikitext-header">
+          <h2>Wikitext 源代码</h2>
+          <button class="copy-btn" @click="copyWikitext">{{ copied ? '已复制！' : '复制' }}</button>
+        </div>
+        <pre class="wikitext">{{ page.wikitext }}</pre>
       </div>
     </div>
 
@@ -39,7 +55,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { pageAPI } from '../api/index.js'
 
@@ -48,10 +64,23 @@ const router = useRouter()
 
 const page = ref(null)
 const loading = ref(true)
+const copied = ref(false)
+
+const wikiUrl = computed(() => {
+  if (!page.value) return '#'
+  return `https://scpfoundation.fandom.com/zh/wiki/${encodeURIComponent(page.value.slug)}`
+})
 
 function formatDate(d) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('zh-CN')
+}
+
+async function copyWikitext() {
+  if (!page.value?.wikitext) return
+  await navigator.clipboard.writeText(page.value.wikitext)
+  copied.value = true
+  setTimeout(() => copied.value = false, 2000)
 }
 
 onMounted(async () => {
@@ -66,21 +95,38 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.detail-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
-.back { color: #667eea; cursor: pointer; margin-bottom: 1rem; }
-.loading { text-align: center; padding: 3rem; color: #888; }
-.error { text-align: center; padding: 3rem; color: #e74c3c; }
+.detail-page { max-width: 860px; margin: 0 auto; padding: 2rem 1rem; }
 
-.content { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.back { color: #667eea; cursor: pointer; }
+.back:hover { text-decoration: underline; }
+.wiki-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border: 1px solid #667eea;
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+}
+.wiki-link:hover { background: #667eea; color: white; }
 
-.main-card, .side-card {
+.card {
   background: white;
   border-radius: 8px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  margin-bottom: 1.5rem;
 }
+
 h1 { font-size: 1.5rem; margin-bottom: 1rem; }
-.meta { display: flex; gap: 1.5rem; color: #888; font-size: 0.9rem; margin-bottom: 1rem; }
+h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
+
+.meta { display: flex; gap: 1.5rem; color: #888; font-size: 0.9rem; margin-bottom: 1rem; flex-wrap: wrap; }
 .categories { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .cat-tag {
   background: #f0f0f0;
@@ -103,9 +149,40 @@ h1 { font-size: 1.5rem; margin-bottom: 1rem; }
 .star.filled { color: #f5a623; }
 .rating-count { color: #888; font-size: 0.9rem; }
 
-.side-card h3 { margin-bottom: 1rem; font-size: 1rem; }
 .rev-item { padding: 0.7rem 0; border-bottom: 1px solid #f0f0f0; }
+.rev-item:last-child { border-bottom: none; }
+.rev-row { display: flex; justify-content: space-between; margin-bottom: 0.2rem; }
 .rev-editor { font-weight: 500; font-size: 0.9rem; }
-.rev-comment { color: #888; font-size: 0.8rem; margin: 0.2rem 0; }
-.rev-time { color: #aaa; font-size: 0.75rem; }
+.rev-time { color: #aaa; font-size: 0.8rem; }
+.rev-comment { color: #888; font-size: 0.85rem; }
+
+.wikitext-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.copy-btn {
+  padding: 0.3rem 0.8rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.copy-btn:hover { background: #5a6fd6; }
+
+.wikitext {
+  background: #f8f8f8;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.loading { text-align: center; padding: 3rem; color: #888; }
+.error { text-align: center; padding: 3rem; color: #e74c3c; }
 </style>
