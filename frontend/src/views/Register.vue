@@ -82,7 +82,7 @@ input {
 button {
   width: 100%;
   padding: 0.7rem;
-  background: #4f6ef7;
+  background: #185897;
   color: white;
   border: none;
   border-radius: 4px;
@@ -94,5 +94,5 @@ button:disabled { background: #aaa; cursor: not-allowed; }
 .error { color: red; margin-bottom: 1rem; font-size: 0.9rem; }
 .success { color: green; margin-bottom: 1rem; font-size: 0.9rem; }
 p { text-align: center; margin-top: 1rem; }
-a { color: #4f6ef7; }
+a { color: #185897; }
 </style>

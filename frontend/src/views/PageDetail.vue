@@ -101,19 +101,24 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e8e8e8;
 }
-.back { color: #667eea; cursor: pointer; }
-.back:hover { text-decoration: underline; }
+.back {
+  color: #185897;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
 .wiki-link {
-  color: #667eea;
+  color: #185897;
   text-decoration: none;
   font-size: 0.9rem;
-  border: 1px solid #667eea;
+  border: 1px solid #185897;
   padding: 0.3rem 0.8rem;
   border-radius: 4px;
 }
-.wiki-link:hover { background: #667eea; color: white; }
+.wiki-link:hover { background: #185897; color: white; }
 
 .card {
   background: white;
@@ -159,14 +164,14 @@ h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
 .wikitext-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .copy-btn {
   padding: 0.3rem 0.8rem;
-  background: #667eea;
+  background: #185897;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
 }
-.copy-btn:hover { background: #5a6fd6; }
+.copy-btn:hover { background: #185897dd; }
 
 .wikitext {
   background: #f8f8f8;

@@ -3,15 +3,11 @@
     <div class="hero">
       <h1>Wikiio</h1>
       <p>Fandom 维基数据分析与评分平台</p>
-      <div class="buttons" v-if="!authStore.isLoggedIn">
-        <a href="/register" class="btn-primary">立即注册</a>
-        <a href="/login" class="btn-secondary">登录</a>
-      </div>
-      <div class="search-quick">
+      <div class="hero-search">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="搜索页面..."
+          placeholder="搜索页面标题、作者或正文..."
           @keyup.enter="goSearch"
         />
         <button @click="goSearch">搜索</button>
@@ -158,13 +154,32 @@ function goSearch() {
 <style scoped>
 .home { min-height: 100vh; background: #f5f7fa; }
 .hero {
-  background: linear-gradient(135deg, #c7c7c7 0%, #858585 100%);
-  color: white;
+  background: #F0F0F0;
+  color: black;
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 4rem 1rem 3rem;
 }
-.hero h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-.hero p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 1.5rem; }
+.hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px; }
+.hero p { font-size: 1rem; opacity: 0.6; margin-bottom: 2rem; }
+.hero-search { display: flex; gap: 0; max-width: 520px; margin: 0 auto; }
+.hero-search input {
+  flex: 1;
+  padding: 0.75rem 1.2rem;
+  border: none;
+  border-radius: 6px 0 0 6px;
+  font-size: 0.95rem;
+  outline: none;
+}
+.hero-search button {
+  padding: 0.75rem 1.5rem;
+  background: #185897;
+  color: white;
+  border: none;
+  border-radius: 0 6px 6px 0;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.hero-search button:hover { background: #134a7f; }
 .buttons { display: flex; gap: 1rem; justify-content: center; }
 .btn-primary {
   padding: 0.7rem 2rem;
@@ -197,7 +212,7 @@ function goSearch() {
   text-align: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
 }
-.stat-number { font-size: 2rem; font-weight: bold; color: #667eea; }
+.stat-number { font-size: 2rem; font-weight: bold; color: #185897; }
 .stat-label { color: #888; margin-top: 0.3rem; }
 
 .main-grid {

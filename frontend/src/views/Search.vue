@@ -1,13 +1,11 @@
 <template>
   <div class="search-page">
-    <div class="search-header">
-      <a href="/" class="back">← 返回首页</a>
-      <h1>搜索</h1>
+    <div class="search-hero">
       <div class="search-bar">
         <input
           v-model="query"
           type="text"
-          placeholder="搜索页面标题或作者..."
+          placeholder="搜索页面标题、作者或正文..."
           @keyup.enter="doSearch"
         />
         <button @click="doSearch">搜索</button>
@@ -221,32 +219,29 @@ onMounted(async () => {
 <style scoped>
 .search-page { min-height: 100vh; background: #f5f7fa; }
 
-.search-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.search-hero {
+  background: #F0F0F0;
   padding: 2rem 1rem;
-  color: white;
 }
-.back { color: rgba(255,255,255,0.8); text-decoration: none; display: block; margin-bottom: 1rem; }
-.back:hover { color: white; }
-h1 { margin-bottom: 1rem; }
-
-.search-bar { display: flex; gap: 0.5rem; max-width: 600px; }
+.search-bar { display: flex; max-width: 600px; margin: 0 auto; }
 .search-bar input {
   flex: 1;
-  padding: 0.7rem 1rem;
+  padding: 0.75rem 1.2rem;
   border: none;
-  border-radius: 4px;
-  font-size: 1rem;
+  border-radius: 6px 0 0 6px;
+  font-size: 0.95rem;
+  outline: none;
 }
 .search-bar button {
-  padding: 0.7rem 1.5rem;
-  background: #4a3f8f;
+  padding: 0.75rem 1.5rem;
+  background: #185897;
   color: white;
-  border: 2px solid white;
-  border-radius: 4px;
+  border: none;
+  border-radius: 0 6px 6px 0;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
+.search-bar button:hover { background: #134a7f; }
 
 .content { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem; }
 
