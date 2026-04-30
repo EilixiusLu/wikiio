@@ -34,6 +34,12 @@
             <option value="word_count">字数最多</option>
           </select>
         </div>
+        <div class="filter-group">
+          <label>
+            <input type="checkbox" v-model="searchWikitext" @change="doSearch" />
+            搜索正文内容
+          </label>
+        </div>
       </div>
 
       <!-- 搜索结果 -->
@@ -55,8 +61,8 @@
             @click="goToPage(page.id)"
           >
             <div class="result-title">
-              <!-- 高亮关键词 -->
               <span v-html="highlight(page.title)"></span>
+              <span class="match-badge" v-for="m in page.match_in" :key="m">{{ m }}</span>
             </div>
             <div class="result-meta">
               <span>作者：<b>{{ page.author || '未知' }}</b></span>
@@ -65,6 +71,10 @@
                 ★ {{ page.rating_avg.toFixed(1) }} ({{ page.rating_count }}人)
               </span>
               <span>{{ formatDate(page.last_edited_at) }}</span>
+            </div>
+            <!-- 正文匹配片段 -->
+            <div class="snippet" v-if="page.snippet">
+              <span v-html="highlight(page.snippet)"></span>
             </div>
             <div class="result-cats" v-if="page.categories.length">
               <span class="cat-tag" v-for="cat in page.categories.slice(0,4)" :key="cat">
@@ -122,6 +132,7 @@ const limit = 20
 const loading = ref(false)
 const searched = ref(false)
 const categories = ref([])
+const searchWikitext = ref(true)
 
 const currentPage = computed(() => Math.floor(skip.value / limit) + 1)
 const totalPages = computed(() => Math.ceil(total.value / limit))
@@ -157,6 +168,8 @@ async function fetchResults() {
       site_id: SITE_ID,
       skip: skip.value,
       limit,
+      search_wikitext: searchWikitext.value,
+      order_by: orderBy.value,
     }
     if (selectedCategory.value) params.category = selectedCategory.value
 
@@ -301,4 +314,25 @@ h1 { margin-bottom: 1rem; }
 .cat-card:hover { background: #e8ecff; }
 .cat-name { font-weight: 500; color: #333; margin-bottom: 0.3rem; }
 .cat-count { color: #888; font-size: 0.85rem; }
+
+.match-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  background: #e8ecff;
+  color: #667eea;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.snippet {
+  font-size: 0.85rem;
+  color: #666;
+  background: #f9f9f9;
+  padding: 0.4rem 0.7rem;
+  border-left: 3px solid #667eea;
+  margin: 0.4rem 0;
+  border-radius: 0 4px 4px 0;
+}
+.snippet :deep(mark) { background: #fff3cd; padding: 0 2px; border-radius: 2px; }
 </style>
