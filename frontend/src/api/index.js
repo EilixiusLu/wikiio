@@ -46,4 +46,11 @@ export const pageAPI = {
   count: (siteId) => api.get('/pages/count', { params: { site_id: siteId } }),
 }
 
+export const ratingAPI = {
+  get: (pageId) => api.get(`/ratings/page/${pageId}`),
+  getMine: (pageId) => api.get(`/ratings/page/${pageId}/mine`),
+  rate: (pageId, score) => api.post(`/ratings/page/${pageId}?score=${score}`),
+  delete: (pageId) => api.delete(`/ratings/page/${pageId}`),
+}
+
 export default api

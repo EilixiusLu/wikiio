@@ -19,12 +19,55 @@
         <div class="categories" v-if="page.categories.length">
           <span class="cat-tag" v-for="cat in page.categories" :key="cat">{{ cat }}</span>
         </div>
+        <!-- 评分区域 -->
         <div class="rating-box">
-          <div class="rating-score">{{ page.rating_avg.toFixed(1) }}</div>
-          <div class="rating-stars">
-            <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= Math.round(page.rating_avg) }">★</span>
+          <div class="rating-left">
+            <div class="rating-score">{{ page.rating_avg.toFixed(1) }}</div>
+            <div class="rating-stars-display">
+              <span
+                v-for="i in 5" :key="i"
+                class="star"
+                :class="{ filled: i <= Math.round(page.rating_avg) }"
+              >★</span>
+            </div>
+            <div class="rating-count">{{ page.rating_count }} 人评分</div>
           </div>
-          <div class="rating-count">{{ page.rating_count }} 人评分</div>
+
+          <div class="rating-right">
+            <!-- 未登录 -->
+            <div v-if="!authStore.isLoggedIn" class="rating-hint">
+              <a href="/login">登录</a>后才能评分
+            </div>
+            <!-- 已登录但未绑定Fandom -->
+            <div v-else-if="!authStore.user?.is_fandom_verified" class="rating-hint">
+              请先<a href="/profile">绑定Fandom账户</a>才能评分
+            </div>
+            <!-- 已登录已绑定，可以评分 -->
+            <div v-else>
+              <div class="my-rating-label">
+                {{ myScore ? '我的评分' : '点击评分' }}
+              </div>
+              <div class="stars-input">
+                <span
+                  v-for="i in 5" :key="i"
+                  class="star-input"
+                  :class="{
+                    filled: i <= (hoverScore || myScore),
+                    hovered: i <= hoverScore
+                  }"
+                  @mouseenter="hoverScore = i"
+                  @mouseleave="hoverScore = 0"
+                  @click="submitRating(i)"
+                >★</span>
+              </div>
+              <div class="rating-actions">
+                <span class="rating-score-label" v-if="myScore">{{ myScore }} 星</span>
+                <button v-if="myScore" class="btn-remove-rating" @click="removeRating">撤销</button>
+              </div>
+              <div class="rating-msg success" v-if="ratingMsg">{{ ratingMsg }}</div>
+              <div class="rating-msg error" v-if="ratingError">{{ ratingError }}</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -58,6 +101,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { pageAPI } from '../api/index.js'
+import { ratingAPI } from '../api/index.js'
+import { useAuthStore } from '../stores/auth.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -86,12 +131,54 @@ async function copyWikitext() {
 onMounted(async () => {
   try {
     page.value = await pageAPI.get(route.params.id)
+    await loadMyRating()
   } catch {
     page.value = null
   } finally {
     loading.value = false
   }
 })
+
+const authStore = useAuthStore()
+const myScore = ref(0)
+const hoverScore = ref(0)
+const ratingMsg = ref('')
+const ratingError = ref('')
+
+async function loadMyRating() {
+  if (!authStore.isLoggedIn) return
+  try {
+    const res = await ratingAPI.getMine(route.params.id)
+    myScore.value = res.score || 0
+  } catch {}
+}
+
+async function submitRating(score) {
+  ratingError.value = ''
+  ratingMsg.value = ''
+  try {
+    const res = await ratingAPI.rate(route.params.id, score)
+    myScore.value = score
+    page.value.rating_avg = res.rating_avg
+    page.value.rating_count = res.rating_count
+    ratingMsg.value = '评分成功！'
+    setTimeout(() => ratingMsg.value = '', 2000)
+  } catch (e) {
+    ratingError.value = e.detail || e.message || '评分失败'
+  }
+}
+
+async function removeRating() {
+  try {
+    await ratingAPI.delete(route.params.id)
+    myScore.value = 0
+    const res = await ratingAPI.get(route.params.id)
+    page.value.rating_avg = res.rating_avg
+    page.value.rating_count = res.rating_count
+    ratingMsg.value = '已删除评分'
+    setTimeout(() => ratingMsg.value = '', 2000)
+  } catch {}
+}
 </script>
 
 <style scoped>
@@ -144,15 +231,43 @@ h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
 .rating-box {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 2rem;
+  padding: 1.2rem;
   background: #f9f9f9;
   border-radius: 8px;
+  flex-wrap: wrap;
 }
-.rating-score { font-size: 2.5rem; font-weight: bold; color: #f5a623; }
-.star { font-size: 1.5rem; color: #ddd; }
-.star.filled { color: #f5a623; }
-.rating-count { color: #888; font-size: 0.9rem; }
+.rating-left { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.rating-score { font-size: 2.5rem; font-weight: bold; color: #f5a623; line-height: 1; }
+.rating-stars-display .star { font-size: 1.2rem; color: #ddd; }
+.rating-stars-display .star.filled { color: #f5a623; }
+.rating-count { color: #888; font-size: 0.8rem; }
+
+.rating-right { flex: 1; }
+.rating-hint { font-size: 0.88rem; color: #888; }
+.rating-hint a { color: #185897; }
+
+.my-rating-label { font-size: 0.85rem; color: #666; margin-bottom: 0.4rem; }
+.stars-input { display: flex; gap: 0.2rem; }
+.star-input {
+  font-size: 2rem;
+  color: #ddd;
+  cursor: pointer;
+  transition: color 0.1s, transform 0.1s;
+}
+.star-input.filled { color: #f5a623; }
+.star-input.hovered { color: #f5a623; transform: scale(1.15); }
+
+.rating-actions { display: flex; align-items: center; gap: 0.8rem; margin-top: 0.4rem; }
+.rating-score-label { font-size: 0.85rem; color: #666; }
+.btn-remove-rating {
+  font-size: 0.78rem; color: #aaa;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.btn-remove-rating:hover { color: #e74c3c; }
+.rating-msg { font-size: 0.85rem; margin-top: 0.4rem; }
+.rating-msg.success { color: #27ae60; }
+.rating-msg.error { color: #e74c3c; }
 
 .rev-item { padding: 0.7rem 0; border-bottom: 1px solid #f0f0f0; }
 .rev-item:last-child { border-bottom: none; }
