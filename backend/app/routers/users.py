@@ -6,8 +6,10 @@ from app.models.user import User
 from app.schemas.user import UserResponse
 from app.utils.security import decode_access_token, generate_random_code
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+import logging
 import httpx
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/users", tags=["用户"])
 security = HTTPBearer()
 
@@ -68,7 +70,7 @@ async def fandom_bind_start(
         "verify_code": verify_code,
         "instruction": f"请在 Fandom 上编辑以下页面，将验证码填入页面内容中",
         "target_page": f"User:{fandom_username}/wikiio-verify",
-        "target_url": f"https://www.fandom.com/wiki/User:{fandom_username}/wikiio-verify",
+        "target_url": f"https://community.fandom.com/wiki/User:{fandom_username}/wikiio-verify",
     }
 
 @router.post("/fandom/bind/verify")
@@ -88,7 +90,7 @@ async def fandom_bind_verify(
     verify_code = current_user.fandom_verify_code
 
     # 通过MediaWiki API读取用户验证页面内容
-    api_url = "https://www.fandom.com/api.php"
+    api_url = "https://community.fandom.com/api.php"
     page_title = f"User:{fandom_username}/wikiio-verify"
 
     try:
@@ -143,25 +145,36 @@ async def fandom_bind_verify(
     }
 
 async def get_fandom_avatar(username: str) -> str:
-    """通过MediaWiki API获取Fandom用户头像"""
+    """通过Fandom services API获取用户头像"""
     try:
+        # 先通过MediaWiki API获取用户ID
         async with httpx.AsyncClient(timeout=10) as client:
-            response = await client.get(
-                "https://www.fandom.com/api.php",
+            r = await client.get(
+                "https://community.fandom.com/api.php",
                 params={
                     "action": "query",
                     "list": "users",
                     "ususers": username,
-                    "usprop": "avatar",
                     "format": "json",
                 }
             )
-            data = response.json()
+            data = r.json()
             users = data.get("query", {}).get("users", [])
-            if users:
-                return users[0].get("avatar", "")
-    except:
-        pass
+            if not users or "userid" not in users[0]:
+                return ""
+            user_id = users[0]["userid"]
+
+        # 再通过services API获取头像
+        async with httpx.AsyncClient(timeout=10) as client:
+            r = await client.get(
+                f"https://services.fandom.com/user-attribute/user/{user_id}/attr/avatar",
+                headers={"Accept": "application/json"}
+            )
+            if r.status_code == 200:
+                data = r.json()
+                return data.get("value", "")
+    except Exception as e:
+        logger.error(f"获取Fandom头像失败: {e}")
     return ""
 
 @router.delete("/fandom/unbind")

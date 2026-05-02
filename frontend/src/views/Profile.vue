@@ -272,7 +272,7 @@ h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333; }
   margin-top: 0.5rem; word-break: break-all;
 }
 
-.verify-step { }
+/* .verify-step { } */
 .verify-actions { display: flex; gap: 1rem; align-items: center; margin-top: 1rem; }
 
 .btn-primary {
