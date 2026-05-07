@@ -6,6 +6,7 @@ from app.models.rating import Rating
 from app.models.page import Page
 from app.models.user import User
 from app.routers.users import get_current_user
+from app.utils.logger import rating_logger
 
 router = APIRouter(prefix="/ratings", tags=["评分"])
 
@@ -112,6 +113,13 @@ async def rate_page(
     page.rating_avg = round(float(row.avg), 2)
 
     await db.commit()
+
+    rating_logger.info(
+        f"user={current_user.id}({current_user.fandom_username}) "
+        f"page={page_id}({page.title}) "
+        f"score={score} "
+        f"site={page.site_id}"
+    )
 
     return {
         "message": "评分成功",

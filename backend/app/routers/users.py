@@ -186,7 +186,9 @@ async def fandom_unbind(
     current_user.fandom_username = None
     current_user.fandom_avatar_url = None
     current_user.fandom_verify_code = None
-    current_user.is_fandom_verified = False
+# 解绑后降为普通用户，但不影响管理员权限
+    if current_user.role < 2:
+        current_user.role = 0
     current_user.role = min(current_user.role, 0)
     await db.commit()
     return {"message": "已解绑Fandom账户"}

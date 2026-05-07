@@ -9,8 +9,8 @@ from app.models.site import Site
 from app.models.page import Page
 from app.models.revision import Revision
 from app.crawler.mediawiki import MediaWikiClient
+from app.utils.logger import crawler_logger as logger
 
-logger = logging.getLogger(__name__)
 
 def utcnow():
     """返回不带时区信息的UTC时间（适配数据库TIMESTAMP WITHOUT TIME ZONE）"""
