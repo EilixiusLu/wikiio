@@ -10,6 +10,7 @@ const router = createRouter({
     { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
     { path: '/search', component: () => import('../views/Search.vue') },
     { path: '/admin', component: () => import('../views/Admin.vue'), meta: { requiresAuth: true } },
+    { path: '/rankings', component: () => import('../views/Rankings.vue') },
   ],
 })
 

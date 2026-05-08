@@ -169,3 +169,81 @@ async def get_page(
             for r in revisions
         ]
     }
+
+@router.get("/rankings/by-rating")
+async def ranking_by_rating(
+    site_id: str,
+    skip: int = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+):
+    """按平均评分排名（至少有1人评分）"""
+    result = await db.execute(
+        select(Page)
+        .where(Page.site_id == site_id, Page.rating_count > 0)
+        .order_by(Page.rating_avg.desc(), Page.rating_count.desc())
+        .offset(skip).limit(limit)
+    )
+    pages = result.scalars().all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "author": p.author,
+            "word_count": p.word_count,
+            "rating_avg": p.rating_avg,
+            "rating_count": p.rating_count,
+            "categories": json.loads(p.categories) if p.categories else [],
+            "last_edited_at": p.last_edited_at,
+        }
+        for p in pages
+    ]
+
+@router.get("/rankings/by-author")
+async def ranking_by_author(
+    site_id: str,
+    order_by: str = "page_count",
+    skip: int = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+):
+    """作者排名，支持按页面数量或平均评分排序"""
+    if order_by == "rating":
+        # 按作者所有页面的平均评分排名
+        result = await db.execute(
+            select(
+                Page.author,
+                func.count().label("page_count"),
+                func.avg(Page.rating_avg).label("avg_rating"),
+                func.sum(Page.word_count).label("total_words"),
+            )
+            .where(Page.site_id == site_id, Page.author != None)
+            .group_by(Page.author)
+            .order_by(desc("avg_rating"))
+            .offset(skip).limit(limit)
+        )
+    else:
+        # 按页面数量排名
+        result = await db.execute(
+            select(
+                Page.author,
+                func.count().label("page_count"),
+                func.avg(Page.rating_avg).label("avg_rating"),
+                func.sum(Page.word_count).label("total_words"),
+            )
+            .where(Page.site_id == site_id, Page.author != None)
+            .group_by(Page.author)
+            .order_by(desc("page_count"))
+            .offset(skip).limit(limit)
+        )
+
+    rows = result.all()
+    return [
+        {
+            "author": r.author,
+            "page_count": r.page_count,
+            "avg_rating": round(float(r.avg_rating), 2) if r.avg_rating else 0.0,
+            "total_words": r.total_words or 0,
+        }
+        for r in rows
+    ]   

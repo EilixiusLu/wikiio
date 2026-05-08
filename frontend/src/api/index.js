@@ -44,6 +44,10 @@ export const pageAPI = {
   stats: (siteId) => api.get('/pages/stats', { params: { site_id: siteId } }),
   topAuthors: (siteId, limit = 10) => api.get('/pages/top-authors', { params: { site_id: siteId, limit } }),
   count: (siteId) => api.get('/pages/count', { params: { site_id: siteId } }),
+  rankingByRating: (siteId, skip = 0, limit = 50) =>
+    api.get('/pages/rankings/by-rating', { params: { site_id: siteId, skip, limit } }),
+  rankingByAuthor: (siteId, orderBy = 'page_count', skip = 0, limit = 50) =>
+    api.get('/pages/rankings/by-author', { params: { site_id: siteId, order_by: orderBy, skip, limit } }),
 }
 
 export const ratingAPI = {

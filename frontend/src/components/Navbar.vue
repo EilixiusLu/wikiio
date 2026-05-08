@@ -11,6 +11,7 @@
       <div class="navbar-links">
         <a href="/" :class="{ active: route.path === '/' }">首页</a>
         <a href="/search" :class="{ active: route.path === '/search' }">搜索</a>
+        <a href="/rankings" :class="{ active: route.path === '/rankings' }">排名</a>
         <a v-if="authStore.user?.role >= 3" href="/admin" :class="{ active: route.path === '/admin' }">管理</a>
       </div>
 
