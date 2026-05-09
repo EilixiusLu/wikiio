@@ -25,6 +25,12 @@
             <p class="user-email">{{ authStore.user.email }}</p>
           </div>
         </div>
+
+        <div class="author-link" v-if="authStore.user.is_fandom_verified">
+          <a :href="`/author/${authStore.user.fandom_username}`" class="btn-author">
+            查看我的作者页 →
+          </a>
+        </div>
         <button class="btn-logout" @click="handleLogout">退出登录</button>
       </div>
 
@@ -304,4 +310,16 @@ h2 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: #333; }
 
 .error { color: #e74c3c; font-size: 0.88rem; margin-top: 0.8rem; }
 .success { color: #27ae60; font-size: 0.88rem; margin-top: 0.8rem; }
+
+.author-link { margin-top: 1rem; }
+.btn-author {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: #185897;
+  color: white;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+.btn-author:hover { background: #134a7f; }
 </style>

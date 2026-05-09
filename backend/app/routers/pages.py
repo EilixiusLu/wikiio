@@ -5,7 +5,10 @@ from app.database import get_db
 from app.models.page import Page
 from app.models.revision import Revision
 from typing import Optional
+from app.models.site import Site
+from app.models.user import User
 import json
+
 
 router = APIRouter(prefix="/pages", tags=["页面"])
 
@@ -123,52 +126,6 @@ async def get_top_authors(
     rows = result.all()
     return [{"author": r[0], "page_count": r[1]} for r in rows]
 
-@router.get("/{page_id}")
-async def get_page(
-    page_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    """获取单个页面详情"""
-    result = await db.execute(select(Page).where(Page.id == page_id))
-    page = result.scalar_one_or_none()
-
-    if not page:
-        raise HTTPException(status_code=404, detail="页面不存在")
-
-    # 获取最近10条编辑历史
-    rev_result = await db.execute(
-        select(Revision)
-        .where(Revision.page_id == page.id)
-        .order_by(desc(Revision.timestamp))
-        .limit(10)
-    )
-    revisions = rev_result.scalars().all()
-
-    return {
-        "id": page.id,
-        "site_id": page.site_id,
-        "page_id": page.page_id,
-        "title": page.title,
-        "slug": page.slug,
-        "author": page.author,
-        "word_count": page.word_count,
-        "categories": json.loads(page.categories) if page.categories else [],
-        "rating_count": page.rating_count,
-        "rating_avg": page.rating_avg,
-        "last_edited_at": page.last_edited_at,
-        "first_crawled_at": page.first_crawled_at,
-        "wikitext": page.wikitext or "",
-        "recent_revisions": [
-            {
-                "rev_id": r.rev_id,
-                "editor": r.editor,
-                "comment": r.comment,
-                "size": r.size,
-                "timestamp": r.timestamp,
-            }
-            for r in revisions
-        ]
-    }
 
 @router.get("/rankings/by-rating")
 async def ranking_by_rating(
@@ -246,4 +203,162 @@ async def ranking_by_author(
             "total_words": r.total_words or 0,
         }
         for r in rows
-    ]   
+    ]
+@router.get("/author/{author_name}")
+async def get_author_pages(
+    author_name: str,
+    site_id: Optional[str] = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取某作者的所有页面"""
+    query = select(Page).where(Page.author == author_name)
+    if site_id:
+        query = query.where(Page.site_id == site_id)
+
+    # 统计总数
+    count_result = await db.execute(
+        select(func.count()).select_from(query.subquery())
+    )
+    total = count_result.scalar()
+
+    # 分页查询
+    query = query.order_by(desc(Page.rating_avg), desc(Page.last_edited_at))
+    query = query.offset(skip).limit(limit)
+    result = await db.execute(query)
+    pages = result.scalars().all()
+
+    return {
+        "total": total,
+        "pages": [
+            {
+                "id": p.id,
+                "site_id": p.site_id,
+                "title": p.title,
+                "word_count": p.word_count,
+                "categories": json.loads(p.categories) if p.categories else [],
+                "rating_avg": p.rating_avg,
+                "rating_count": p.rating_count,
+                "last_edited_at": p.last_edited_at,
+            }
+            for p in pages
+        ]
+    }
+
+@router.get("/author/{author_name}/stats")
+async def get_author_stats(
+    author_name: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取某作者的统计数据（跨所有站点）"""
+    # 按站点分组统计
+    result = await db.execute(
+        select(
+            Page.site_id,
+            func.count().label("page_count"),
+            func.sum(Page.word_count).label("total_words"),
+            func.avg(Page.rating_avg).label("avg_rating"),
+            func.sum(Page.rating_count).label("total_ratings"),
+        )
+        .where(Page.author == author_name)
+        .group_by(Page.site_id)
+    )
+    rows = result.all()
+
+    # 获取站点名称
+    site_ids = [r.site_id for r in rows]
+    sites_result = await db.execute(
+        select(Site).where(Site.site_id.in_(site_ids))
+    )
+    sites_map = {s.site_id: s.name for s in sites_result.scalars().all()}
+
+    # 全站汇总
+    total_pages = sum(r.page_count for r in rows)
+    total_words = sum(r.total_words or 0 for r in rows)
+    total_ratings = sum(r.total_ratings or 0 for r in rows)
+
+    return {
+        "author": author_name,
+        "total_pages": total_pages,
+        "total_words": total_words,
+        "total_ratings": total_ratings,
+        "sites": [
+            {
+                "site_id": r.site_id,
+                "site_name": sites_map.get(r.site_id, r.site_id),
+                "page_count": r.page_count,
+                "total_words": r.total_words or 0,
+                "avg_rating": round(float(r.avg_rating), 2) if r.avg_rating else 0.0,
+                "total_ratings": r.total_ratings or 0,
+            }
+            for r in rows
+        ]
+    }   
+@router.get("/author/{author_name}/profile")
+async def get_author_profile(
+    author_name: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取作者的Wikiio账户信息（头像等）"""
+    result = await db.execute(
+        select(User).where(
+            User.fandom_username == author_name,
+            User.is_fandom_verified == True
+        )
+    )
+    user = result.scalar_one_or_none()
+    if not user:
+        return {"has_account": False, "avatar_url": None}
+    return {
+        "has_account": True,
+        "avatar_url": user.fandom_avatar_url,
+        "username": user.username,
+    }
+
+@router.get("/{page_id}")
+async def get_page(
+    page_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取单个页面详情"""
+    result = await db.execute(select(Page).where(Page.id == page_id))
+    page = result.scalar_one_or_none()
+
+    if not page:
+        raise HTTPException(status_code=404, detail="页面不存在")
+
+    # 获取最近10条编辑历史
+    rev_result = await db.execute(
+        select(Revision)
+        .where(Revision.page_id == page.id)
+        .order_by(desc(Revision.timestamp))
+        .limit(10)
+    )
+    revisions = rev_result.scalars().all()
+
+    return {
+        "id": page.id,
+        "site_id": page.site_id,
+        "page_id": page.page_id,
+        "title": page.title,
+        "slug": page.slug,
+        "author": page.author,
+        "word_count": page.word_count,
+        "categories": json.loads(page.categories) if page.categories else [],
+        "rating_count": page.rating_count,
+        "rating_avg": page.rating_avg,
+        "last_edited_at": page.last_edited_at,
+        "first_crawled_at": page.first_crawled_at,
+        "wikitext": page.wikitext or "",
+        "recent_revisions": [
+            {
+                "rev_id": r.rev_id,
+                "editor": r.editor,
+                "comment": r.comment,
+                "size": r.size,
+                "timestamp": r.timestamp,
+            }
+            for r in revisions
+        ]
+    }

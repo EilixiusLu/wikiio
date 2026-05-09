@@ -12,7 +12,12 @@
       <div class="card">
         <h1>{{ page.title }}</h1>
         <div class="meta">
-          <span>作者：<b>{{ page.author || '未知' }}</b></span>
+           <span>作者：
+            <a v-if="page.author" :href="`/author/${page.author}`" class="author-link" @click.stop>
+              {{ page.author }}
+            </a>
+            <b v-else>未知</b>
+          </span>
           <span>字数：{{ page.word_count }}</span>
           <span>最后编辑：{{ formatDate(page.last_edited_at) }}</span>
         </div>
@@ -305,4 +310,7 @@ h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
 
 .loading { text-align: center; padding: 3rem; color: #888; }
 .error { text-align: center; padding: 3rem; color: #e74c3c; }
+
+.author-link { color: #185897; font-weight: 500; text-decoration: none; }
+.author-link:hover { text-decoration: underline; }
 </style>
