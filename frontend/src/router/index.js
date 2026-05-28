@@ -12,6 +12,7 @@ const router = createRouter({
     { path: '/rankings', component: () => import('../views/Rankings.vue') },
     { path: '/author/:author', component: () => import('../views/Author.vue') },
     { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
+    { path: '/wiki/:siteId', component: () => import('../views/WikiStats.vue') },
   ],
 })
 

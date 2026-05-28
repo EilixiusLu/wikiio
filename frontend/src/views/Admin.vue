@@ -57,14 +57,71 @@
     </div>
 
     <!-- 站点管理 -->
+    <!-- 接入管理 -->
     <div class="card">
-      <h2>站点管理</h2>
+      <div class="card-header">
+        <h2>接入管理</h2>
+        <button class="btn-add" @click="showAddForm = !showAddForm">
+          {{ showAddForm ? '收起' : '+ 接入新维基' }}
+        </button>
+      </div>
+
+      <!-- 新增表单 -->
+      <div class="add-form" v-if="showAddForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>平台 *</label>
+            <select v-model="newSite.platform">
+              <option value="fandom">Fandom</option>
+              <option value="miraheze">Miraheze</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>是否启用 RatePage 扩展</label>
+            <select v-model="newSite.has_ratepage">
+              <option :value="false">否</option>
+              <option :value="true">是</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>维基 URL *</label>
+            <input v-model="newSite.base_url" placeholder="如 https://scpfoundation.fandom.com/zh" />
+          </div>
+          <div class="form-group">
+            <label>维基名称 *</label>
+            <input v-model="newSite.name" placeholder="如 SCP基金会中文Wiki" />
+          </div>
+          <div class="form-group">
+            <label>维基编号 (site_id) *</label>
+            <input v-model="newSite.site_id" placeholder="如 scp-zh" />
+          </div>
+          <div class="form-group">
+            <label>语言</label>
+            <input v-model="newSite.language" placeholder="zh" />
+          </div>
+          <div class="form-group full">
+            <label>简介</label>
+            <input v-model="newSite.description" placeholder="维基简介（选填）" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-submit" @click="addSite" :disabled="addLoading">
+            {{ addLoading ? '提交中...' : '确认接入' }}
+          </button>
+          <span class="form-error" v-if="addError">{{ addError }}</span>
+          <span class="form-success" v-if="addSuccess">{{ addSuccess }}</span>
+        </div>
+      </div>
+
+      <!-- 站点列表 -->
       <table class="site-table">
         <thead>
           <tr>
-            <th>站点名称</th>
+            <th>维基名称</th>
             <th>site_id</th>
+            <th>平台</th>
             <th>语言</th>
+            <th>RatePage</th>
             <th>状态</th>
             <th>操作</th>
           </tr>
@@ -73,23 +130,21 @@
           <tr v-for="site in sites" :key="site.site_id">
             <td>{{ site.name }}</td>
             <td><code>{{ site.site_id }}</code></td>
+            <td>
+              <span class="platform-badge" :class="site.platform">
+                {{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}
+              </span>
+            </td>
             <td>{{ site.language }}</td>
+            <td>{{ site.has_ratepage ? '✅' : '—' }}</td>
             <td>
               <span class="status-badge" :class="site.status">
                 {{ statusLabel(site.status) }}
               </span>
             </td>
             <td class="actions">
-              <button
-                v-if="site.status === 'pending'"
-                class="btn-approve"
-                @click="approveSite(site.site_id)"
-              >通过</button>
-              <button
-                v-if="site.status === 'pending'"
-                class="btn-reject"
-                @click="rejectSite(site.site_id)"
-              >拒绝</button>
+              <button class="btn-crawl" @click="crawlSite(site.site_id)">爬取</button>
+              <button class="btn-reject" @click="deleteSite(site.site_id)">删除</button>
             </td>
           </tr>
         </tbody>
@@ -165,7 +220,7 @@ async function switchLog(type) {
 }
 
 async function loadSites() {
-  const res = await axios.get('http://127.0.0.1:8000/api/v1/admin/sites', { headers: headers() })
+  const res = await axios.get('http://127.0.0.1:8000/api/v1/sites/', { headers: headers() })
   sites.value = res.data
 }
 
@@ -182,6 +237,66 @@ async function rejectSite(siteId) {
 onMounted(async () => {
   await Promise.all([loadStats(), loadLogs(), loadSites()])
 })
+
+const showAddForm = ref(false)
+const addLoading = ref(false)
+const addError = ref('')
+const addSuccess = ref('')
+const newSite = ref({
+  platform: 'fandom',
+  has_ratepage: false,
+  base_url: '',
+  name: '',
+  site_id: '',
+  language: 'zh',
+  description: '',
+})
+
+async function addSite() {
+  addError.value = ''
+  addSuccess.value = ''
+  if (!newSite.value.name || !newSite.value.site_id || !newSite.value.base_url) {
+    addError.value = '请填写所有必填项'
+    return
+  }
+  addLoading.value = true
+  try {
+    const params = new URLSearchParams({
+      name: newSite.value.name,
+      site_id: newSite.value.site_id,
+      base_url: newSite.value.base_url,
+      platform: newSite.value.platform,
+      has_ratepage: newSite.value.has_ratepage,
+      language: newSite.value.language,
+      description: newSite.value.description,
+    })
+    await axios.post(
+      `http://127.0.0.1:8000/api/v1/sites/?${params}`,
+      {},
+      { headers: headers() }
+    )
+    addSuccess.value = `站点 ${newSite.value.name} 接入成功！`
+    newSite.value = { platform: 'fandom', has_ratepage: false, base_url: '', name: '', site_id: '', language: 'zh', description: '' }
+    await loadSites()
+    setTimeout(() => { addSuccess.value = ''; showAddForm.value = false }, 2000)
+  } catch (e) {
+    addError.value = e.response?.data?.detail || '接入失败'
+  } finally {
+    addLoading.value = false
+  }
+}
+
+async function crawlSite(siteId) {
+  if (!confirm(`确定要爬取站点 ${siteId} 吗？`)) return
+  await axios.post(`http://127.0.0.1:8000/api/v1/sites/${siteId}/crawl`, {}, { headers: headers() })
+  alert('爬取任务已启动！')
+}
+
+async function deleteSite(siteId) {
+  if (!confirm(`确定要删除站点 ${siteId} 吗？此操作不可恢复！`)) return
+  await axios.delete(`http://127.0.0.1:8000/api/v1/sites/${siteId}`, { headers: headers() })
+  await loadSites()
+}
 </script>
 
 <style scoped>
@@ -285,4 +400,47 @@ h2 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 1rem; }
   background: #fee2e2; color: #991b1b;
   border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
 }
+
+.btn-add {
+  padding: 0.4rem 1rem;
+  background: #185897; color: white;
+  border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+}
+.add-form {
+  background: #f9f9f9; border-radius: 8px;
+  padding: 1.2rem; margin-bottom: 1.2rem;
+}
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 0.8rem; margin-bottom: 1rem;
+}
+.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.form-group.full { grid-column: span 2; }
+.form-group label { font-size: 0.82rem; color: #555; font-weight: 500; }
+.form-group input, .form-group select {
+  padding: 0.5rem 0.8rem;
+  border: 1px solid #ddd; border-radius: 4px;
+  font-size: 0.88rem; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: #185897; }
+.form-actions { display: flex; align-items: center; gap: 1rem; }
+.btn-submit {
+  padding: 0.5rem 1.2rem;
+  background: #185897; color: white;
+  border: none; border-radius: 4px; cursor: pointer;
+}
+.btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+.form-error { color: #e74c3c; font-size: 0.85rem; }
+.form-success { color: #27ae60; font-size: 0.85rem; }
+.btn-crawl {
+  padding: 0.2rem 0.6rem;
+  background: #e8f0fc; color: #185897;
+  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
+}
+.platform-badge {
+  font-size: 0.75rem; font-weight: 600;
+  padding: 0.2rem 0.5rem; border-radius: 3px;
+}
+.platform-badge.fandom { background: #e8f0fc; color: #185897; }
+.platform-badge.miraheze { background: #e8f8f0; color: #27ae60; }
 </style>

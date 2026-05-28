@@ -27,6 +27,10 @@ class Site(Base):
     # 审核状态
     # pending=待审核 approved=已接入 rejected=已拒绝
     status = Column(String, default="pending")
+    # 平台类型：fandom 或 miraheze
+    platform = Column(String, default="fandom")
+    # 是否已启用RatePage扩展
+    has_ratepage = Column(Boolean, default=False)
 
     # 申请人（对应users表的id）
     owner_id = Column(Integer, nullable=True)
