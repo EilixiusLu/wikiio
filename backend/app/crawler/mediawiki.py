@@ -156,3 +156,28 @@ class MediaWikiClient:
             return []
 
         return data.get("query", {}).get("recentchanges", [])
+    
+    async def get_page_rating(self, page_id: int) -> Optional[dict]:
+        """通过RatePage扩展API获取页面原站评分"""
+        data = await self._request({
+            "action": "query",
+            "prop": "pagerating",
+            "pageids": page_id,
+        })
+        if not data:
+            return None
+
+        pages = data.get("query", {}).get("pages", {})
+        page = next(iter(pages.values()), None)
+        if not page:
+            return None
+
+        rating_data = page.get("pagerating", {})
+        if not rating_data:
+            return None
+
+        return {
+            "total_votes": rating_data.get("total_votes", 0),
+            "total_points": rating_data.get("total_points", 0),
+            "avg_rating": rating_data.get("avg_rating", 0),
+        }

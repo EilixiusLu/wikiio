@@ -56,6 +56,7 @@ export const pageAPI = {
     api.get(`/pages/author/${encodeURIComponent(author)}/stats`),
   authorProfile: (author) =>
     api.get(`/pages/author/${encodeURIComponent(author)}/profile`),
+  siteRating: (pageId) => api.get(`/pages/${pageId}/site-rating`),
 }
 
 export const ratingAPI = {

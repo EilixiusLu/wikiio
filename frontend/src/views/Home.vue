@@ -137,7 +137,8 @@ h3 { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin-bottom: 0.4rem
 .site-desc {
   font-size: 0.82rem; color: #888;
   margin-bottom: 1rem; line-height: 1.5;
-  display: -webkit-box; -webkit-line-clamp: 2;
+  display: -webkit-box; 
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical; overflow: hidden;
 }
 .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: auto; }

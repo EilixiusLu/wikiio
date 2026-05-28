@@ -74,6 +74,27 @@
             </div>
           </div>
         </div>
+
+        <!-- 原站评分（仅RatePage维基显示） -->
+      <div class="card site-rating-card" v-if="siteRating">
+        <h2>原站评分</h2>
+        <div class="site-rating-box">
+          <div class="site-rating-left">
+            <div class="site-rating-score">{{ siteRating.avg_rating.toFixed(1) }}</div>
+            <div class="site-rating-label">/ 10</div>
+          </div>
+          <div class="site-rating-right">
+            <div class="site-rating-bar-wrap">
+              <div class="site-rating-bar" :style="{ width: (siteRating.avg_rating / 10 * 100) + '%' }"></div>
+            </div>
+            <div class="site-rating-meta">
+              <span>{{ siteRating.total_votes }} 票</span>
+              <span>总分 {{ siteRating.total_points }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="site-rating-note">数据来源：原站 RatePage 扩展</div>
+      </div>
       </div>
 
       <!-- 编辑历史卡片 -->
@@ -136,7 +157,7 @@ async function copyWikitext() {
 onMounted(async () => {
   try {
     page.value = await pageAPI.get(route.params.id)
-    await loadMyRating()
+    await Promise.all([loadMyRating(), loadSiteRating()])
   } catch {
     page.value = null
   } finally {
@@ -182,6 +203,17 @@ async function removeRating() {
     page.value.rating_count = res.rating_count
     ratingMsg.value = '已删除评分'
     setTimeout(() => ratingMsg.value = '', 2000)
+  } catch {}
+}
+
+const siteRating = ref(null)
+
+async function loadSiteRating() {
+  try {
+    const res = await pageAPI.siteRating(route.params.id)
+    if (res.available) {
+      siteRating.value = res
+    }
   } catch {}
 }
 </script>
@@ -313,4 +345,21 @@ h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #333; }
 
 .author-link { color: #185897; font-weight: 500; text-decoration: none; }
 .author-link:hover { text-decoration: underline; }
+
+.site-rating-card h2 { margin-bottom: 1rem; }
+.site-rating-box { display: flex; align-items: center; gap: 1.5rem; }
+.site-rating-left { display: flex; align-items: baseline; gap: 0.3rem; flex-shrink: 0; }
+.site-rating-score { font-size: 2.8rem; font-weight: bold; color: #185897; line-height: 1; }
+.site-rating-label { font-size: 1rem; color: #aaa; }
+.site-rating-right { flex: 1; }
+.site-rating-bar-wrap {
+  height: 8px; background: #f0f0f0;
+  border-radius: 4px; overflow: hidden; margin-bottom: 0.5rem;
+}
+.site-rating-bar {
+  height: 100%; background: #185897;
+  border-radius: 4px; transition: width 0.5s ease;
+}
+.site-rating-meta { display: flex; gap: 1rem; color: #888; font-size: 0.85rem; }
+.site-rating-note { color: #bbb; font-size: 0.75rem; margin-top: 0.8rem; }
 </style>

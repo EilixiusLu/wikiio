@@ -7,6 +7,7 @@ from app.models.revision import Revision
 from typing import Optional
 from app.models.site import Site
 from app.models.user import User
+from app.crawler.mediawiki import MediaWikiClient
 import json
 
 
@@ -361,4 +362,38 @@ async def get_page(
             }
             for r in revisions
         ]
+    }
+
+@router.get("/{page_id}/site-rating")
+async def get_site_rating(
+    page_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取页面在原站的RatePage评分（仅对启用了RatePage扩展的维基有效）"""
+    # 查找页面
+    result = await db.execute(select(Page).where(Page.id == page_id))
+    page = result.scalar_one_or_none()
+    if not page:
+        raise HTTPException(status_code=404, detail="页面不存在")
+
+    # 查找站点，检查是否启用了RatePage
+    site_result = await db.execute(
+        select(Site).where(Site.site_id == page.site_id)
+    )
+    site = site_result.scalar_one_or_none()
+    if not site or not site.has_ratepage:
+        return {"available": False, "reason": "该站点未启用RatePage扩展"}
+
+    # 调用MediaWiki API获取评分
+    client = MediaWikiClient(site.api_url, requests_per_second=2.0)
+    rating = await client.get_page_rating(page.page_id)
+
+    if not rating:
+        return {"available": False, "reason": "无法获取原站评分"}
+
+    return {
+        "available": True,
+        "total_votes": rating["total_votes"],
+        "total_points": rating["total_points"],
+        "avg_rating": rating["avg_rating"],
     }
