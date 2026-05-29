@@ -33,6 +33,18 @@ async def list_sites(db: AsyncSession = Depends(get_db)):
         for s in sites
     ]
 
+@router.get("/{site_id}")
+async def get_site(
+    site_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """获取单个站点详情"""
+    result = await db.execute(select(Site).where(Site.site_id == site_id))
+    site = result.scalar_one_or_none()
+    if not site:
+        raise HTTPException(status_code=404, detail="站点不存在")
+    return site
+
 @router.post("/")
 async def create_site(
     name: str,

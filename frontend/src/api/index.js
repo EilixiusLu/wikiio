@@ -36,6 +36,7 @@ export const userAPI = {
 
 export const siteAPI = {
   list: () => api.get('/sites/'),
+  get: (siteId) => api.get(`/sites/${siteId}`),
 }
 
 export const pageAPI = {

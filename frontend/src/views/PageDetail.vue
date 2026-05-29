@@ -126,7 +126,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { pageAPI } from '../api/index.js'
+import { pageAPI, siteAPI } from '../api/index.js'
 import { ratingAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/auth.js'
 
@@ -136,10 +136,13 @@ const router = useRouter()
 const page = ref(null)
 const loading = ref(true)
 const copied = ref(false)
+const site = ref(null)
 
 const wikiUrl = computed(() => {
-  if (!page.value) return '#'
-  return `https://scpfoundation.fandom.com/zh/wiki/${encodeURIComponent(page.value.slug)}`
+  if (!page.value || !site.value) return '#'
+  const base = site.value.base_url.replace(/\/+$/, '')
+  const slug = encodeURIComponent(page.value.slug)
+  return `${base}/wiki/${slug}`
 })
 
 function formatDate(d) {
@@ -157,6 +160,15 @@ async function copyWikitext() {
 onMounted(async () => {
   try {
     page.value = await pageAPI.get(route.params.id)
+    // 根据 page.site_id 加载站点信息，用于动态维基链接
+    if (page.value?.site_id) {
+      try {
+        site.value = await siteAPI.get(page.value.site_id)
+      } catch {
+        // 站点加载失败时用 fallback
+        site.value = null
+      }
+    }
     await Promise.all([loadMyRating(), loadSiteRating()])
   } catch {
     page.value = null

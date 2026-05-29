@@ -143,8 +143,11 @@
               </span>
             </td>
             <td class="actions">
-              <button class="btn-crawl" @click="crawlSite(site.site_id)">爬取</button>
-              <button class="btn-reject" @click="deleteSite(site.site_id)">删除</button>
+              <button v-if="site.status === 'approved'" class="btn-crawl" @click="crawlSite(site.site_id)">爬取</button>
+              <button v-if="site.status === 'pending'" class="btn-approve" @click="approveSite(site.site_id)">通过</button>
+              <button v-if="site.status === 'pending'" class="btn-reject" @click="rejectSite(site.site_id)">拒绝</button>
+              <button v-if="site.status === 'approved'" class="btn-reject" @click="deleteSite(site.site_id)">删除</button>
+              <button v-if="site.status === 'rejected'" class="btn-approve" @click="approveSite(site.site_id)">重新通过</button>
             </td>
           </tr>
         </tbody>
@@ -220,7 +223,7 @@ async function switchLog(type) {
 }
 
 async function loadSites() {
-  const res = await axios.get('http://127.0.0.1:8000/api/v1/sites/', { headers: headers() })
+  const res = await axios.get('http://127.0.0.1:8000/api/v1/admin/sites', { headers: headers() })
   sites.value = res.data
 }
 

@@ -16,6 +16,15 @@
       <!-- 筛选栏 -->
       <div class="filters">
         <div class="filter-group">
+          <label>选择站点</label>
+          <select v-model="selectedSite" @change="onSiteChange">
+            <option value="">全部站点</option>
+            <option v-for="site in sites" :key="site.site_id" :value="site.site_id">
+              {{ site.name }}
+            </option>
+          </select>
+        </div>
+        <div class="filter-group" v-if="selectedSite">
           <label>分类筛选</label>
           <select v-model="selectedCategory" @change="doSearch">
             <option value="">全部分类</option>
@@ -89,19 +98,26 @@
           </div>
         </div>
 
-        <!-- 未搜索时显示热门分类 -->
+        <!-- 未搜索时显示热门分类或提示 -->
         <div v-else class="categories-section">
-          <h3>浏览分类</h3>
-          <div class="cat-grid">
-            <div
-              class="cat-card"
-              v-for="cat in categories"
-              :key="cat.name"
-              @click="browseCategory(cat.name)"
-            >
-              <div class="cat-name">{{ cat.name }}</div>
-              <div class="cat-count">{{ cat.count }} 篇</div>
+          <template v-if="selectedSite">
+            <h3>浏览分类</h3>
+            <div class="cat-grid" v-if="categories.length > 0">
+              <div
+                class="cat-card"
+                v-for="cat in categories"
+                :key="cat.name"
+                @click="browseCategory(cat.name)"
+              >
+                <div class="cat-name">{{ cat.name }}</div>
+                <div class="cat-count">{{ cat.count }} 篇</div>
+              </div>
             </div>
+            <div v-else class="loading">该站点暂无分类数据</div>
+          </template>
+          <div v-else class="no-site-hint">
+            <h3>请先选择一个站点</h3>
+            <p class="hint-text">选择站点后可以按分类浏览，或在搜索框中输入关键词搜索全站内容</p>
           </div>
         </div>
       </div>
@@ -112,15 +128,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { pageAPI } from '../api/index.js'
+import { pageAPI, siteAPI } from '../api/index.js'
 import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
 
-const SITE_ID = 'scp-zh'
 const query = ref('')
 const lastQuery = ref('')
+const selectedSite = ref('')
 const selectedCategory = ref('')
 const orderBy = ref('last_edited_at')
 const results = ref([])
@@ -129,6 +145,7 @@ const skip = ref(0)
 const limit = 20
 const loading = ref(false)
 const searched = ref(false)
+const sites = ref([])
 const categories = ref([])
 const searchWikitext = ref(true)
 
@@ -156,6 +173,24 @@ async function doSearch() {
   await fetchResults()
 }
 
+async function onSiteChange() {
+  selectedCategory.value = ''
+  // 切换站点时重新加载分类
+  if (selectedSite.value) {
+    try {
+      const res = await axios.get('http://127.0.0.1:8000/api/v1/search/categories', {
+        params: { site_id: selectedSite.value }
+      })
+      categories.value = res.data
+    } catch {
+      categories.value = []
+    }
+  } else {
+    categories.value = []
+  }
+  await doSearch()
+}
+
 async function fetchResults() {
   loading.value = true
   searched.value = true
@@ -163,7 +198,7 @@ async function fetchResults() {
   try {
     const params = {
       q: query.value || selectedCategory.value || ' ',
-      site_id: SITE_ID,
+      site_id: selectedSite.value || undefined,
       skip: skip.value,
       limit,
       search_wikitext: searchWikitext.value,
@@ -198,14 +233,27 @@ async function browseCategory(cat) {
 }
 
 onMounted(async () => {
-  // 加载分类列表
+  // 加载站点列表
   try {
-    const res = await axios.get('http://127.0.0.1:8000/api/v1/search/categories', {
-      params: { site_id: SITE_ID }
-    })
-    categories.value = res.data
+    sites.value = await siteAPI.list()
+    // 如果只有一个站点，自动选中；否则默认"全部站点"
+    if (sites.value.length === 1) {
+      selectedSite.value = sites.value[0].site_id
+    }
   } catch (e) {
     console.error(e)
+  }
+
+  // 如果有选中的站点，加载其分类
+  if (selectedSite.value) {
+    try {
+      const res = await axios.get('http://127.0.0.1:8000/api/v1/search/categories', {
+        params: { site_id: selectedSite.value }
+      })
+      categories.value = res.data
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   // 如果URL带了搜索参数
@@ -297,6 +345,9 @@ onMounted(async () => {
 .pagination button:disabled { background: #ddd; cursor: not-allowed; }
 
 .categories-section h3 { margin-bottom: 1rem; color: #333; }
+.no-site-hint { text-align: center; padding: 2rem 0; }
+.no-site-hint h3 { color: #888; margin-bottom: 0.5rem; }
+.hint-text { color: #aaa; font-size: 0.9rem; }
 .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.8rem; }
 .cat-card {
   background: #f5f7fa;
