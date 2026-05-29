@@ -19,6 +19,11 @@ class User(Base):
     fandom_verify_code = Column(String, nullable=True)
     is_fandom_verified = Column(Boolean, default=False)
 
+    # Miraheze账户绑定
+    miraheze_username = Column(String, nullable=True)
+    miraheze_verify_code = Column(String, nullable=True)
+    is_miraheze_verified = Column(Boolean, default=False)
+
     # 用户权限组
     # 0=普通用户 1=已验证用户 2=维基管理员 3=Wikiio管理员
     role = Column(Integer, default=0)

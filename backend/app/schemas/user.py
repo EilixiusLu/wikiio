@@ -37,9 +37,11 @@ class UserResponse(BaseModel):
     email: str
     username: str
     is_email_verified: bool
-    is_fandom_verified: bool
+    is_fandom_verified: bool = False
     fandom_username: Optional[str] = None
     fandom_avatar_url: Optional[str] = None
+    miraheze_username: Optional[str] = None
+    is_miraheze_verified: bool = False
     role: int
     created_at: datetime
 

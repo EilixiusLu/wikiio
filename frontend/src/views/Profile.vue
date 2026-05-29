@@ -21,6 +21,9 @@
               <span class="badge fandom" v-if="authStore.user.is_fandom_verified">
                 Fandom: {{ authStore.user.fandom_username }}
               </span>
+              <span class="badge miraheze" v-if="authStore.user.is_miraheze_verified">
+                Miraheze: {{ authStore.user.miraheze_username }}
+              </span>
             </div>
             <p class="user-email">{{ authStore.user.email }}</p>
           </div>
@@ -87,6 +90,62 @@
           </div>
           <div class="error" v-if="verifyError">{{ verifyError }}</div>
           <div class="success" v-if="verifySuccess">{{ verifySuccess }}</div>
+        </div>
+      </div>
+
+      <!-- Miraheze 账户绑定 -->
+      <div class="card">
+        <h2>Miraheze 账户绑定</h2>
+
+        <!-- 已绑定 -->
+        <div v-if="authStore.user.is_miraheze_verified" class="bound-state">
+          <div class="bound-info">
+            <div class="mh-icon">M</div>
+            <div>
+              <p><b>{{ authStore.user.miraheze_username }}</b></p>
+              <p class="hint">已成功绑定 Miraheze 账户</p>
+            </div>
+          </div>
+          <button class="btn-danger" @click="handleMirahezeUnbind">解除绑定</button>
+        </div>
+
+        <!-- 未绑定：第一步 -->
+        <div v-else-if="!mhVerifyCode">
+          <p class="hint">绑定 Miraheze 账户后可对 Miraheze 维基上的页面评分。</p>
+          <div class="form-row">
+            <input v-model="mhUsername" placeholder="输入你的 Miraheze 用户名" />
+            <button class="btn-primary" @click="startMirahezeBind" :disabled="mhBindLoading">
+              {{ mhBindLoading ? '处理中...' : '开始绑定' }}
+            </button>
+          </div>
+          <div class="error" v-if="mhBindError">{{ mhBindError }}</div>
+        </div>
+
+        <!-- 未绑定：第二步 -->
+        <div v-else class="verify-step">
+          <p class="hint">请按照以下步骤完成验证：</p>
+          <ol class="steps">
+            <li>
+              登录你的 Miraheze 账户，前往以下页面：
+              <a :href="mhVerifyUrl" target="_blank" class="link">{{ mhVerifyPage }}</a>
+            </li>
+            <li>
+              编辑该页面，将以下验证码填入页面内容并保存：
+              <div class="code-box">
+                {{ mhVerifyCode }}
+                <button class="copy-btn" @click="copyMhCode">{{ mhCodeCopied ? '已复制' : '复制' }}</button>
+              </div>
+            </li>
+            <li>完成后点击下方按钮验证</li>
+          </ol>
+          <div class="verify-actions">
+            <button class="btn-primary" @click="doMirahezeVerify" :disabled="mhVerifyLoading">
+              {{ mhVerifyLoading ? '验证中...' : '我已填写，立即验证' }}
+            </button>
+            <button class="btn-text" @click="cancelMirahezeBind">取消</button>
+          </div>
+          <div class="error" v-if="mhVerifyError">{{ mhVerifyError }}</div>
+          <div class="success" v-if="mhVerifySuccess">{{ mhVerifySuccess }}</div>
         </div>
       </div>
 
@@ -202,6 +261,83 @@ function handleLogout() {
 onMounted(async () => {
   await authStore.fetchMe()
 })
+
+const mhUsername = ref('')
+const mhVerifyCode = ref('')
+const mhVerifyPage = ref('')
+const mhVerifyUrl = ref('')
+const mhBindLoading = ref(false)
+const mhVerifyLoading = ref(false)
+const mhBindError = ref('')
+const mhVerifyError = ref('')
+const mhVerifySuccess = ref('')
+const mhCodeCopied = ref(false)
+
+async function startMirahezeBind() {
+  if (!mhUsername.value.trim()) return
+  mhBindError.value = ''
+  mhBindLoading.value = true
+  try {
+    const res = await axios.post(
+      `http://127.0.0.1:8000/api/v1/users/miraheze/bind/start?miraheze_username=${encodeURIComponent(mhUsername.value)}`,
+      {},
+      { headers: { Authorization: `Bearer ${getToken()}` } }
+    )
+    mhVerifyCode.value = res.data.verify_code
+    mhVerifyPage.value = res.data.target_page
+    mhVerifyUrl.value = res.data.target_url
+  } catch (e) {
+    mhBindError.value = e.response?.data?.detail || '发起绑定失败'
+  } finally {
+    mhBindLoading.value = false
+  }
+}
+
+async function doMirahezeVerify() {
+  mhVerifyError.value = ''
+  mhVerifySuccess.value = ''
+  mhVerifyLoading.value = true
+  try {
+    const res = await axios.post(
+      'http://127.0.0.1:8000/api/v1/users/miraheze/bind/verify',
+      {},
+      { headers: { Authorization: `Bearer ${getToken()}` } }
+    )
+    mhVerifySuccess.value = res.data.message
+    await authStore.fetchMe()
+    mhVerifyCode.value = ''
+  } catch (e) {
+    mhVerifyError.value = e.response?.data?.detail || '验证失败'
+  } finally {
+    mhVerifyLoading.value = false
+  }
+}
+
+async function handleMirahezeUnbind() {
+  if (!confirm('确定要解除Miraheze账户绑定吗？')) return
+  try {
+    await axios.delete(
+      'http://127.0.0.1:8000/api/v1/users/miraheze/unbind',
+      { headers: { Authorization: `Bearer ${getToken()}` } }
+    )
+    await authStore.fetchMe()
+  } catch {
+    alert('解绑失败')
+  }
+}
+
+function cancelMirahezeBind() {
+  mhVerifyCode.value = ''
+  mhVerifyPage.value = ''
+  mhVerifyUrl.value = ''
+  mhBindError.value = ''
+}
+
+async function copyMhCode() {
+  await navigator.clipboard.writeText(mhVerifyCode.value)
+  mhCodeCopied.value = true
+  setTimeout(() => mhCodeCopied.value = false, 2000)
+}
 </script>
 
 <style scoped>
@@ -240,6 +376,7 @@ onMounted(async () => {
 .role-3 { background: #fdf3e8; color: #e67e22; }
 .verified { background: #e8f8f0; color: #27ae60; }
 .fandom { background: #e8f4fd; color: #185897; }
+.miraheze { background: #e8f8f0; color: #FFDE04; }
 
 .btn-logout {
   position: absolute; top: 1.5rem; right: 1.5rem;

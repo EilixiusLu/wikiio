@@ -192,3 +192,113 @@ async def fandom_unbind(
     current_user.role = min(current_user.role, 0)
     await db.commit()
     return {"message": "已解绑Fandom账户"}
+
+@router.post("/miraheze/bind/start")
+async def miraheze_bind_start(
+    miraheze_username: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """第一步：生成Miraheze验证码"""
+    if current_user.is_miraheze_verified:
+        raise HTTPException(status_code=400, detail="已经绑定了Miraheze账户")
+
+    # 检查是否已被其他用户绑定
+    result = await db.execute(
+        select(User).where(
+            User.miraheze_username == miraheze_username,
+            User.is_miraheze_verified == True
+        )
+    )
+    if result.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="该Miraheze账户已被其他用户绑定")
+
+    verify_code = generate_random_code(16)
+    current_user.miraheze_username = miraheze_username
+    current_user.miraheze_verify_code = verify_code
+    await db.commit()
+
+    return {
+        "verify_code": verify_code,
+        "instruction": "请在 Miraheze Meta 上编辑以下页面，将验证码填入页面内容中",
+        "target_page": f"User:{miraheze_username}/wikiio-verify",
+        "target_url": f"https://meta.miraheze.org/wiki/User:{miraheze_username}/wikiio-verify",
+    }
+
+@router.post("/miraheze/bind/verify")
+async def miraheze_bind_verify(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """第二步：验证Miraheze页面上的验证码"""
+    if current_user.is_miraheze_verified:
+        raise HTTPException(status_code=400, detail="已经绑定了Miraheze账户")
+
+    if not current_user.miraheze_username or not current_user.miraheze_verify_code:
+        raise HTTPException(status_code=400, detail="请先发起绑定申请")
+
+    miraheze_username = current_user.miraheze_username
+    verify_code = current_user.miraheze_verify_code
+    page_title = f"User:{miraheze_username}/wikiio-verify"
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.get(
+                "https://meta.miraheze.org/w/api.php",
+                params={
+                    "action": "query",
+                    "titles": page_title,
+                    "prop": "revisions",
+                    "rvprop": "content",
+                    "rvlimit": 1,
+                    "format": "json",
+                    "utf8": "1",
+                }
+            )
+            data = response.json()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"无法连接到Miraheze API: {str(e)}")
+
+    pages = data.get("query", {}).get("pages", {})
+    page = next(iter(pages.values()))
+
+    if "missing" in page:
+        raise HTTPException(
+            status_code=400,
+            detail=f"找不到页面 {page_title}，请确认已在 Miraheze Meta 创建该页面"
+        )
+
+    revisions = page.get("revisions", [])
+    if not revisions:
+        raise HTTPException(status_code=400, detail="页面内容为空")
+
+    page_content = revisions[0].get("*", "") or revisions[0].get("content", "")
+
+    if verify_code not in page_content:
+        raise HTTPException(
+            status_code=400,
+            detail="验证码不匹配，请确认已将验证码填入页面"
+        )
+
+    current_user.is_miraheze_verified = True
+    current_user.miraheze_verify_code = None
+    if current_user.role < 1:
+        current_user.role = 1
+    await db.commit()
+
+    return {
+        "message": "Miraheze账户绑定成功！",
+        "miraheze_username": miraheze_username,
+    }
+
+@router.delete("/miraheze/unbind")
+async def miraheze_unbind(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """解绑Miraheze账户"""
+    current_user.miraheze_username = None
+    current_user.miraheze_verify_code = None
+    current_user.is_miraheze_verified = False
+    await db.commit()
+    return {"message": "已解绑Miraheze账户"}
