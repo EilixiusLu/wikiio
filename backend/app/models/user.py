@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, func, text
 from app.database import Base
 
 class User(Base):
@@ -22,7 +22,7 @@ class User(Base):
     # Miraheze账户绑定
     miraheze_username = Column(String, nullable=True)
     miraheze_verify_code = Column(String, nullable=True)
-    is_miraheze_verified = Column(Boolean, default=False)
+    is_miraheze_verified = Column(Boolean, default=False, nullable=False, server_default=text("false"))
 
     # 用户权限组
     # 0=普通用户 1=已验证用户 2=维基管理员 3=Wikiio管理员
