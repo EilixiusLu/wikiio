@@ -22,7 +22,7 @@ class User(Base):
     # Miraheze账户绑定
     miraheze_username = Column(String, nullable=True)
     miraheze_verify_code = Column(String, nullable=True)
-    is_miraheze_verified = Column(Boolean, default=False, nullable=False, server_default=text("false"))
+    is_miraheze_verified = Column(Boolean, default=False, nullable=False, server_default=text("0"))
 
     # 用户权限组
     # 0=普通用户 1=已验证用户 2=维基管理员 3=Wikiio管理员

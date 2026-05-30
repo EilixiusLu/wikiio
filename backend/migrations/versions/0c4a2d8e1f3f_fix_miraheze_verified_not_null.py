@@ -30,7 +30,7 @@ def upgrade() -> None:
         'users', 'is_miraheze_verified',
         existing_type=sa.Boolean(),
         nullable=False,
-        server_default=sa.text("false"),
+        server_default=sa.text("0"),
     )
 
 
