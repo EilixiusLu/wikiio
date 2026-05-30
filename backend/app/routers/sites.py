@@ -6,6 +6,7 @@ from app.models.site import Site
 from app.routers.users import get_current_user
 from app.models.user import User
 from app.crawler.tasks import crawl_site_full
+from app.schemas.site import SiteCreate
 
 router = APIRouter(prefix="/sites", tags=["维基站点"])
 
@@ -45,15 +46,9 @@ async def get_site(
         raise HTTPException(status_code=404, detail="站点不存在")
     return site
 
-@router.post("/")
+@router.post("/", status_code=201)
 async def create_site(
-    name: str,
-    site_id: str,
-    base_url: str,
-    platform: str = "fandom",
-    has_ratepage: bool = False,
-    description: str = "",
-    language: str = "zh",
+    data: SiteCreate,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -62,27 +57,27 @@ async def create_site(
         raise HTTPException(status_code=403, detail="需要管理员权限")
 
     # 检查site_id是否已存在
-    result = await db.execute(select(Site).where(Site.site_id == site_id))
+    result = await db.execute(select(Site).where(Site.site_id == data.site_id))
     if result.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="该站点ID已存在")
 
     # 根据平台自动生成API URL
-    if platform == "fandom":
+    if data.platform == "fandom":
         # Fandom: https://xxx.fandom.com/zh/api.php
-        api_url = base_url.rstrip("/") + "/api.php"
+        api_url = data.base_url.rstrip("/") + "/api.php"
     else:
         # Miraheze: https://xxx.miraheze.org/w/api.php
-        api_url = base_url.rstrip("/") + "/w/api.php"
+        api_url = data.base_url.rstrip("/") + "/w/api.php"
 
     site = Site(
-        name=name,
-        site_id=site_id,
+        name=data.name,
+        site_id=data.site_id,
         api_url=api_url,
-        base_url=base_url,
-        description=description,
-        language=language,
-        platform=platform,
-        has_ratepage=has_ratepage,
+        base_url=data.base_url,
+        description=data.description,
+        language=data.language,
+        platform=data.platform,
+        has_ratepage=data.has_ratepage,
         owner_id=current_user.id,
         status="approved",
         crawl_enabled=True,

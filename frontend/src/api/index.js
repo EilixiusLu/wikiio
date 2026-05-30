@@ -63,7 +63,7 @@ export const pageAPI = {
 export const ratingAPI = {
   get: (pageId) => api.get(`/ratings/page/${pageId}`),
   getMine: (pageId) => api.get(`/ratings/page/${pageId}/mine`),
-  rate: (pageId, score) => api.post(`/ratings/page/${pageId}?score=${score}`),
+  rate: (pageId, score) => api.post(`/ratings/page/${pageId}`, { score }),
   delete: (pageId) => api.delete(`/ratings/page/${pageId}`),
 }
 

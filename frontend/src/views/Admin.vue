@@ -264,18 +264,17 @@ async function addSite() {
   }
   addLoading.value = true
   try {
-    const params = new URLSearchParams({
-      name: newSite.value.name,
-      site_id: newSite.value.site_id,
-      base_url: newSite.value.base_url,
-      platform: newSite.value.platform,
-      has_ratepage: newSite.value.has_ratepage,
-      language: newSite.value.language,
-      description: newSite.value.description,
-    })
     await axios.post(
-      `http://127.0.0.1:8000/api/v1/sites/?${params}`,
-      {},
+      'http://127.0.0.1:8000/api/v1/sites/',
+      {
+        name: newSite.value.name,
+        site_id: newSite.value.site_id,
+        base_url: newSite.value.base_url,
+        platform: newSite.value.platform,
+        has_ratepage: newSite.value.has_ratepage,
+        language: newSite.value.language,
+        description: newSite.value.description,
+      },
       { headers: headers() }
     )
     addSuccess.value = `站点 ${newSite.value.name} 接入成功！`

@@ -186,6 +186,7 @@ async def fandom_unbind(
     current_user.fandom_username = None
     current_user.fandom_avatar_url = None
     current_user.fandom_verify_code = None
+    current_user.is_fandom_verified = False
     # 解绑后降为普通用户，但不影响管理员权限（role>=2保持不变）
     if current_user.role < 2:
         current_user.role = 0

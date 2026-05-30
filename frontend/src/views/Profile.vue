@@ -376,7 +376,7 @@ async function copyMhCode() {
 .role-3 { background: #fdf3e8; color: #e67e22; }
 .verified { background: #e8f8f0; color: #27ae60; }
 .fandom { background: #e8f4fd; color: #185897; }
-.miraheze { background: #e8f8f0; color: #FFDE04; }
+.miraheze { background: #FFFBD8; color: #e4c600; }
 
 .btn-logout {
   position: absolute; top: 1.5rem; right: 1.5rem;

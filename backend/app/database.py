@@ -5,7 +5,7 @@ from app.config import settings
 # 创建异步数据库引擎
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=True  # 开发模式下打印SQL语句，方便调试
+    echo=(settings.ENVIRONMENT == "development"),  # 仅开发模式打印SQL
 )
 
 # 创建Session工厂

@@ -7,6 +7,7 @@ from app.models.page import Page
 from app.models.user import User
 from app.routers.users import get_current_user
 from app.utils.logger import rating_logger
+from app.schemas.rating import RatingCreate
 
 router = APIRouter(prefix="/ratings", tags=["评分"])
 
@@ -48,7 +49,7 @@ async def get_my_rating(
 @router.post("/page/{page_id}")
 async def rate_page(
     page_id: int,
-    score: int,
+    data: RatingCreate,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -57,10 +58,6 @@ async def rate_page(
     # 必须绑定Fandom账户才能评分
     if not current_user.is_fandom_verified:
         raise HTTPException(status_code=403, detail="请先绑定Fandom账户才能评分")
-
-    # 验证分数范围
-    if not 1 <= score <= 5:
-        raise HTTPException(status_code=400, detail="评分必须在1-5之间")
 
     # 检查页面是否存在
     result = await db.execute(select(Page).where(Page.id == page_id))
@@ -74,6 +71,8 @@ async def rate_page(
     site = site_result.scalar_one_or_none()
     if site and not site.rating_enabled:
         raise HTTPException(status_code=403, detail="该站点未开放评分功能")
+
+    score = data.score
 
     # 查找是否已评过分
     result = await db.execute(
