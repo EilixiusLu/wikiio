@@ -27,5 +27,8 @@ Thumbs.db
 # VS Code
 .vscode/
 
+# Docker 本地覆写（不上传）
+docker-compose.override.yml
+
 # Alembic不需要上传的内容
 backend/migrations/versions/*.pyc
