@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 10000,
 })
 
@@ -32,11 +32,22 @@ export const authAPI = {
 
 export const userAPI = {
   getMe: () => api.get('/users/me'),
+  fandomBindStart: (fandomUsername) =>
+    api.post(`/users/fandom/bind/start?fandom_username=${encodeURIComponent(fandomUsername)}`),
+  fandomBindVerify: () => api.post('/users/fandom/bind/verify'),
+  fandomUnbind: () => api.delete('/users/fandom/unbind'),
+  mirahezeBindStart: (mhUsername) =>
+    api.post(`/users/miraheze/bind/start?miraheze_username=${encodeURIComponent(mhUsername)}`),
+  mirahezeBindVerify: () => api.post('/users/miraheze/bind/verify'),
+  mirahezeUnbind: () => api.delete('/users/miraheze/unbind'),
 }
 
 export const siteAPI = {
   list: () => api.get('/sites/'),
   get: (siteId) => api.get(`/sites/${siteId}`),
+  create: (data) => api.post('/sites/', data),
+  delete: (siteId) => api.delete(`/sites/${siteId}`),
+  triggerCrawl: (siteId, full = false) => api.post(`/sites/${siteId}/crawl?full=${full}`),
 }
 
 export const pageAPI = {
@@ -65,6 +76,19 @@ export const ratingAPI = {
   getMine: (pageId) => api.get(`/ratings/page/${pageId}/mine`),
   rate: (pageId, score) => api.post(`/ratings/page/${pageId}`, { score }),
   delete: (pageId) => api.delete(`/ratings/page/${pageId}`),
+}
+
+export const searchAPI = {
+  search: (params) => api.get('/search/', { params }),
+  categories: (siteId) => api.get('/search/categories', { params: { site_id: siteId } }),
+}
+
+export const adminAPI = {
+  stats: () => api.get('/admin/stats'),
+  logs: (logType, lines = 200) => api.get(`/admin/logs/${logType}?lines=${lines}`),
+  sites: () => api.get('/admin/sites'),
+  approveSite: (siteId) => api.post(`/admin/sites/${siteId}/approve`),
+  rejectSite: (siteId) => api.post(`/admin/sites/${siteId}/reject`),
 }
 
 export default api

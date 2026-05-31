@@ -159,7 +159,7 @@
 
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
-import axios from 'axios'
+import { adminAPI, siteAPI } from '../api/index.js'
 
 const stats = ref(null)
 const logType = ref('access')
@@ -176,14 +176,6 @@ const logTypes = [
   { key: 'error', label: '错误日志' },
 ]
 
-function getToken() {
-  return localStorage.getItem('access_token')
-}
-
-function headers() {
-  return { Authorization: `Bearer ${getToken()}` }
-}
-
 function getLogClass(line) {
   if (line.includes('[ERROR]')) return 'log-error'
   if (line.includes('[WARNING]')) return 'log-warning'
@@ -196,19 +188,16 @@ function statusLabel(s) {
 }
 
 async function loadStats() {
-  const res = await axios.get('http://127.0.0.1:8000/api/v1/admin/stats', { headers: headers() })
-  stats.value = res.data
+  const res = await adminAPI.stats()
+  stats.value = res
 }
 
 async function loadLogs() {
   logLoading.value = true
   try {
-    const res = await axios.get(
-      `http://127.0.0.1:8000/api/v1/admin/logs/${logType.value}?lines=200`,
-      { headers: headers() }
-    )
-    logLines.value = res.data.lines
-    totalLines.value = res.data.total_lines || 0
+    const res = await adminAPI.logs(logType.value, 200)
+    logLines.value = res.lines
+    totalLines.value = res.total_lines || 0
     await nextTick()
     if (logBox.value) {
       logBox.value.scrollTop = logBox.value.scrollHeight
@@ -224,17 +213,17 @@ async function switchLog(type) {
 }
 
 async function loadSites() {
-  const res = await axios.get('http://127.0.0.1:8000/api/v1/admin/sites', { headers: headers() })
-  sites.value = res.data
+  const res = await adminAPI.sites()
+  sites.value = res
 }
 
 async function approveSite(siteId) {
-  await axios.post(`http://127.0.0.1:8000/api/v1/admin/sites/${siteId}/approve`, {}, { headers: headers() })
+  await adminAPI.approveSite(siteId)
   await loadSites()
 }
 
 async function rejectSite(siteId) {
-  await axios.post(`http://127.0.0.1:8000/api/v1/admin/sites/${siteId}/reject`, {}, { headers: headers() })
+  await adminAPI.rejectSite(siteId)
   await loadSites()
 }
 
@@ -265,25 +254,21 @@ async function addSite() {
   }
   addLoading.value = true
   try {
-    await axios.post(
-      'http://127.0.0.1:8000/api/v1/sites/',
-      {
-        name: newSite.value.name,
-        site_id: newSite.value.site_id,
-        base_url: newSite.value.base_url,
-        platform: newSite.value.platform,
-        has_ratepage: newSite.value.has_ratepage,
-        language: newSite.value.language,
-        description: newSite.value.description,
-      },
-      { headers: headers() }
-    )
+    await siteAPI.create({
+      name: newSite.value.name,
+      site_id: newSite.value.site_id,
+      base_url: newSite.value.base_url,
+      platform: newSite.value.platform,
+      has_ratepage: newSite.value.has_ratepage,
+      language: newSite.value.language,
+      description: newSite.value.description,
+    })
     addSuccess.value = `站点 ${newSite.value.name} 接入成功！`
     newSite.value = { platform: 'fandom', has_ratepage: false, base_url: '', name: '', site_id: '', language: 'zh', description: '' }
     await loadSites()
     setTimeout(() => { addSuccess.value = ''; showAddForm.value = false }, 2000)
   } catch (e) {
-    addError.value = e.response?.data?.detail || '接入失败'
+    addError.value = e.detail || '接入失败'
   } finally {
     addLoading.value = false
   }
@@ -292,17 +277,13 @@ async function addSite() {
 async function crawlSite(siteId, full = false) {
   const type = full ? '全量爬取' : '增量更新'
   if (!confirm(`确定要对站点 ${siteId} 执行${type}吗？`)) return
-  await axios.post(
-    `http://127.0.0.1:8000/api/v1/sites/${siteId}/crawl?full=${full}`,
-    {},
-    { headers: headers() }
-  )
+  await siteAPI.triggerCrawl(siteId, full)
   alert(`${type}任务已提交！`)
 }
 
 async function deleteSite(siteId) {
   if (!confirm(`确定要删除站点 ${siteId} 吗？此操作不可恢复！`)) return
-  await axios.delete(`http://127.0.0.1:8000/api/v1/sites/${siteId}`, { headers: headers() })
+  await siteAPI.delete(siteId)
   await loadSites()
 }
 </script>

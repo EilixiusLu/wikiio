@@ -128,8 +128,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { pageAPI, siteAPI } from '../api/index.js'
-import axios from 'axios'
+import { pageAPI, siteAPI, searchAPI } from '../api/index.js'
 
 const router = useRouter()
 const route = useRoute()
@@ -178,10 +177,8 @@ async function onSiteChange() {
   // 切换站点时重新加载分类
   if (selectedSite.value) {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/v1/search/categories', {
-        params: { site_id: selectedSite.value }
-      })
-      categories.value = res.data
+      const res = await searchAPI.categories(selectedSite.value)
+      categories.value = res
     } catch {
       categories.value = []
     }
@@ -206,9 +203,9 @@ async function fetchResults() {
     }
     if (selectedCategory.value) params.category = selectedCategory.value
 
-    const res = await axios.get('http://127.0.0.1:8000/api/v1/search/', { params })
-    results.value = res.data.results
-    total.value = res.data.total
+    const res = await searchAPI.search(params)
+    results.value = res.results
+    total.value = res.total
   } catch (e) {
     console.error(e)
   } finally {
@@ -247,10 +244,8 @@ onMounted(async () => {
   // 如果有选中的站点，加载其分类
   if (selectedSite.value) {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/v1/search/categories', {
-        params: { site_id: selectedSite.value }
-      })
-      categories.value = res.data
+      const res = await searchAPI.categories(selectedSite.value)
+      categories.value = res
     } catch (e) {
       console.error(e)
     }

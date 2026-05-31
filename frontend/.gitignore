@@ -12,7 +12,10 @@ node_modules
 dist
 dist-ssr
 coverage
-*.local
+# Vite env files (keep .env.example for documentation)
+.env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*

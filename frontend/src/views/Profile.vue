@@ -157,7 +157,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
-import axios from 'axios'
+import { userAPI } from '../api/index.js'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -183,25 +183,17 @@ const roleBadgeClass = computed(() => {
   return classes[authStore.user?.role || 0]
 })
 
-function getToken() {
-  return localStorage.getItem('access_token')
-}
-
 async function startBind() {
   if (!fandomUsername.value.trim()) return
   bindError.value = ''
   bindLoading.value = true
   try {
-    const res = await axios.post(
-      `http://127.0.0.1:8000/api/v1/users/fandom/bind/start?fandom_username=${encodeURIComponent(fandomUsername.value)}`,
-      {},
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
-    verifyCode.value = res.data.verify_code
-    verifyPage.value = res.data.target_page
-    verifyUrl.value = res.data.target_url
+    const res = await userAPI.fandomBindStart(fandomUsername.value)
+    verifyCode.value = res.verify_code
+    verifyPage.value = res.target_page
+    verifyUrl.value = res.target_url
   } catch (e) {
-    bindError.value = e.response?.data?.detail || '发起绑定失败'
+    bindError.value = e.detail || '发起绑定失败'
   } finally {
     bindLoading.value = false
   }
@@ -212,16 +204,12 @@ async function doVerify() {
   verifySuccess.value = ''
   verifyLoading.value = true
   try {
-    const res = await axios.post(
-      'http://127.0.0.1:8000/api/v1/users/fandom/bind/verify',
-      {},
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
-    verifySuccess.value = res.data.message
+    const res = await userAPI.fandomBindVerify()
+    verifySuccess.value = res.message
     await authStore.fetchMe()
     verifyCode.value = ''
   } catch (e) {
-    verifyError.value = e.response?.data?.detail || '验证失败，请检查是否已填写验证码'
+    verifyError.value = e.detail || '验证失败，请检查是否已填写验证码'
   } finally {
     verifyLoading.value = false
   }
@@ -230,12 +218,9 @@ async function doVerify() {
 async function handleUnbind() {
   if (!confirm('确定要解除Fandom账户绑定吗？')) return
   try {
-    await axios.delete(
-      'http://127.0.0.1:8000/api/v1/users/fandom/unbind',
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
+    await userAPI.fandomUnbind()
     await authStore.fetchMe()
-  } catch (e) {
+  } catch {
     alert('解绑失败')
   }
 }
@@ -278,16 +263,12 @@ async function startMirahezeBind() {
   mhBindError.value = ''
   mhBindLoading.value = true
   try {
-    const res = await axios.post(
-      `http://127.0.0.1:8000/api/v1/users/miraheze/bind/start?miraheze_username=${encodeURIComponent(mhUsername.value)}`,
-      {},
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
-    mhVerifyCode.value = res.data.verify_code
-    mhVerifyPage.value = res.data.target_page
-    mhVerifyUrl.value = res.data.target_url
+    const res = await userAPI.mirahezeBindStart(mhUsername.value)
+    mhVerifyCode.value = res.verify_code
+    mhVerifyPage.value = res.target_page
+    mhVerifyUrl.value = res.target_url
   } catch (e) {
-    mhBindError.value = e.response?.data?.detail || '发起绑定失败'
+    mhBindError.value = e.detail || '发起绑定失败'
   } finally {
     mhBindLoading.value = false
   }
@@ -298,16 +279,12 @@ async function doMirahezeVerify() {
   mhVerifySuccess.value = ''
   mhVerifyLoading.value = true
   try {
-    const res = await axios.post(
-      'http://127.0.0.1:8000/api/v1/users/miraheze/bind/verify',
-      {},
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
-    mhVerifySuccess.value = res.data.message
+    const res = await userAPI.mirahezeBindVerify()
+    mhVerifySuccess.value = res.message
     await authStore.fetchMe()
     mhVerifyCode.value = ''
   } catch (e) {
-    mhVerifyError.value = e.response?.data?.detail || '验证失败'
+    mhVerifyError.value = e.detail || '验证失败'
   } finally {
     mhVerifyLoading.value = false
   }
@@ -316,10 +293,7 @@ async function doMirahezeVerify() {
 async function handleMirahezeUnbind() {
   if (!confirm('确定要解除Miraheze账户绑定吗？')) return
   try {
-    await axios.delete(
-      'http://127.0.0.1:8000/api/v1/users/miraheze/unbind',
-      { headers: { Authorization: `Bearer ${getToken()}` } }
-    )
+    await userAPI.mirahezeUnbind()
     await authStore.fetchMe()
   } catch {
     alert('解绑失败')
