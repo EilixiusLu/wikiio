@@ -5,8 +5,11 @@ from app.database import get_db
 from app.models.site import Site
 from app.routers.users import get_current_user
 from app.models.user import User
-from app.crawler.tasks import crawl_site_full
 from app.schemas.site import SiteCreate
+from app.crawler.tasks import crawl_site_incremental, crawl_site_full
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/sites", tags=["维基站点"])
 
@@ -92,9 +95,10 @@ async def trigger_crawl(
     site_id: str,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    full: bool = False,
 ):
-    """手动触发全量爬取（仅Wikiio管理员）"""
+    """手动触发爬取（仅Wikiio管理员）。full=True 全量爬取，否则增量更新。"""
     if current_user.role < 3:
         raise HTTPException(status_code=403, detail="权限不足")
 
@@ -103,8 +107,20 @@ async def trigger_crawl(
     if not site:
         raise HTTPException(status_code=404, detail="站点不存在")
 
-    background_tasks.add_task(crawl_site_full, site_id)
-    return {"message": f"已开始爬取站点 {site.name}"}
+    crawl_type = "全量爬取" if full else "增量更新"
+    task_func = crawl_site_full if full else crawl_site_incremental
+
+    # 优先通过 Celery 异步执行
+    try:
+        from app.crawler.scheduler import crawl_single_site_task
+        crawl_single_site_task.delay(site_id, full=full)
+        return {"message": f"已提交{crawl_type}任务: {site.name}（Celery）"}
+    except Exception:
+        logger.warning(
+            "Celery/Redis 不可用，降级为 BackgroundTasks 执行: site=%s", site_id
+        )
+        background_tasks.add_task(task_func, site_id)
+        return {"message": f"已开始{crawl_type}: {site.name}（降级模式）"}
 
 @router.delete("/{site_id}")
 async def delete_site(

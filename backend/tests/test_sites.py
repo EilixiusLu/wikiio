@@ -170,7 +170,9 @@ class TestTriggerCrawl:
             headers=admin_headers,
         )
         assert resp.status_code == 200
-        assert "开始爬取" in resp.json()["message"]
+        msg = resp.json()["message"]
+        assert ("已提交" in msg) or ("已开始" in msg)
+        assert sample_site.name in msg
 
     async def test_trigger_as_non_admin(self, client, user_headers, sample_site):
         """普通用户应不能触发爬取"""

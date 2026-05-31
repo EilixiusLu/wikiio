@@ -143,7 +143,8 @@
               </span>
             </td>
             <td class="actions">
-              <button v-if="site.status === 'approved'" class="btn-crawl" @click="crawlSite(site.site_id)">爬取</button>
+              <button v-if="site.status === 'approved'" class="btn-crawl" @click="crawlSite(site.site_id, false)">增量</button>
+              <button v-if="site.status === 'approved'" class="btn-crawl-full" @click="crawlSite(site.site_id, true)">全量</button>
               <button v-if="site.status === 'pending'" class="btn-approve" @click="approveSite(site.site_id)">通过</button>
               <button v-if="site.status === 'pending'" class="btn-reject" @click="rejectSite(site.site_id)">拒绝</button>
               <button v-if="site.status === 'approved'" class="btn-reject" @click="deleteSite(site.site_id)">删除</button>
@@ -288,10 +289,15 @@ async function addSite() {
   }
 }
 
-async function crawlSite(siteId) {
-  if (!confirm(`确定要爬取站点 ${siteId} 吗？`)) return
-  await axios.post(`http://127.0.0.1:8000/api/v1/sites/${siteId}/crawl`, {}, { headers: headers() })
-  alert('爬取任务已启动！')
+async function crawlSite(siteId, full = false) {
+  const type = full ? '全量爬取' : '增量更新'
+  if (!confirm(`确定要对站点 ${siteId} 执行${type}吗？`)) return
+  await axios.post(
+    `http://127.0.0.1:8000/api/v1/sites/${siteId}/crawl?full=${full}`,
+    {},
+    { headers: headers() }
+  )
+  alert(`${type}任务已提交！`)
 }
 
 async function deleteSite(siteId) {
@@ -437,6 +443,11 @@ h2 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 1rem; }
 .btn-crawl {
   padding: 0.2rem 0.6rem;
   background: #e8f0fc; color: #185897;
+  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
+}
+.btn-crawl-full {
+  padding: 0.2rem 0.6rem;
+  background: #fff3cd; color: #856404;
   border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
 }
 .platform-badge {

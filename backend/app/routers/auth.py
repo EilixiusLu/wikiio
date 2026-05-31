@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_db
@@ -8,11 +8,13 @@ from app.utils.security import (
     hash_password, verify_password,
     create_access_token, generate_random_code
 )
+from app.limiter import limiter
 
 router = APIRouter(prefix="/auth", tags=["认证"])
 
 @router.post("/register", response_model=UserResponse, status_code=201)
-async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
+@limiter.limit("3/minute")
+async def register(request: Request, data: UserRegister, db: AsyncSession = Depends(get_db)):
     """用户注册"""
 
     # 检查邮箱是否已被注册
@@ -41,7 +43,8 @@ async def register(data: UserRegister, db: AsyncSession = Depends(get_db)):
     return user
 
 @router.post("/login", response_model=TokenResponse)
-async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
+@limiter.limit("5/minute")
+async def login(request: Request, data: UserLogin, db: AsyncSession = Depends(get_db)):
     """用户登录"""
 
     # 查找用户

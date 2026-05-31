@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import AsyncSessionLocal
+from app.config import settings
 from app.models.site import Site
 from app.models.page import Page
 from app.models.revision import Revision
@@ -14,7 +15,7 @@ from app.utils.logger import crawler_logger as logger
 
 def utcnow():
     """返回不带时区信息的UTC时间（适配数据库TIMESTAMP WITHOUT TIME ZONE）"""
-    return datetime.utcnow()
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 def parse_timestamp(ts: str) -> datetime:
     """把MediaWiki返回的时间字符串转换为不带时区的datetime"""
@@ -31,7 +32,7 @@ async def crawl_site_full(site_id: str):
             return
 
         logger.info(f"开始全量爬取站点: {site.name} ({site.api_url})")
-        client = MediaWikiClient(site.api_url, requests_per_second=0.5)
+        client = MediaWikiClient(site.api_url, requests_per_second=settings.CRAWL_REQUESTS_PER_SECOND)
 
         logger.info("正在获取页面列表...")
         all_pages = await client.get_all_pages(namespace=0)
@@ -157,10 +158,10 @@ async def crawl_site_incremental(site_id: str):
             return
 
         logger.info(f"开始增量更新: {site.name}")
-        client = MediaWikiClient(site.api_url, requests_per_second=0.5)
+        client = MediaWikiClient(site.api_url, requests_per_second=settings.CRAWL_REQUESTS_PER_SECOND)
 
-        recent = await client.get_recent_changes(minutes=60)
-        logger.info(f"发现 {len(recent)} 个最近变动页面")
+        recent = await client.get_recent_changes(minutes=settings.CRAWL_INCREMENTAL_WINDOW_MINUTES)
+        logger.info(f"发现 {len(recent)} 个最近变动页面（窗口={settings.CRAWL_INCREMENTAL_WINDOW_MINUTES}分钟）")
 
         titles = list({rc["title"] for rc in recent})
         for title in titles:
@@ -173,3 +174,52 @@ async def crawl_site_incremental(site_id: str):
         site.last_crawled_at = utcnow()
         await db.commit()
         logger.info("增量更新完成")
+
+
+async def crawl_all_sites_incremental() -> dict:
+    """
+    遍历所有已启用爬取的站点，串行执行增量更新。
+
+    站点之间有固定延迟以保护源服务器不被封 IP。
+    返回执行统计：{total, success, failed, pages}
+
+    注意：此函数由 Celery 调度器或手动触发调用，不经过 FastAPI 请求生命周期。
+    """
+    stats = {"total": 0, "success": 0, "failed": 0, "pages": 0}
+
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(Site).where(
+                Site.crawl_enabled == True,
+                Site.status == "approved",
+            )
+        )
+        sites = result.scalars().all()
+
+    stats["total"] = len(sites)
+    logger.info(f"批量增量爬取: 发现 {len(sites)} 个待处理站点")
+
+    for i, site in enumerate(sites):
+        logger.info(
+            f"[{i+1}/{len(sites)}] 站点: {site.name} ({site.site_id})"
+        )
+        try:
+            await crawl_site_incremental(site.site_id)
+            stats["success"] += 1
+        except Exception as e:
+            logger.error(f"增量更新站点 {site.name} 失败: {e}")
+            stats["failed"] += 1
+
+        # 站间延迟：避免短时间连续请求同一目标 IP 域
+        if i < len(sites) - 1:
+            delay = settings.CRAWL_INTER_SITE_DELAY_SECONDS
+            logger.info(
+                f"等待 {delay}s 后处理下一个站点（保护源服务器）..."
+            )
+            await asyncio.sleep(delay)
+
+    logger.info(
+        f"批量增量爬取完成: success={stats['success']}, "
+        f"failed={stats['failed']}, total={stats['total']}"
+    )
+    return stats

@@ -1,6 +1,9 @@
 import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.limiter import limiter
 from app.routers import auth, users, sites, pages, search, ratings, admin
 from app.utils.logger import access_logger, error_logger
 
@@ -10,6 +13,12 @@ app = FastAPI(
     version="0.1.0"
 )
 
+# 注入 limiter 到 app.state（slowapi 需要）
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# ---------- CORS ----------
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1"],
@@ -17,6 +26,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------- 访问日志 ----------
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -40,6 +51,8 @@ async def log_requests(request: Request, call_next):
         )
         raise
 
+# ---------- 路由 ----------
+
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(users.router, prefix="/api/v1")
 app.include_router(sites.router, prefix="/api/v1")
@@ -47,6 +60,8 @@ app.include_router(pages.router, prefix="/api/v1")
 app.include_router(search.router, prefix="/api/v1")
 app.include_router(ratings.router, prefix="/api/v1")
 app.include_router(admin.router, prefix="/api/v1")
+
+# ---------- 根路径 ----------
 
 @app.get("/")
 async def root():
