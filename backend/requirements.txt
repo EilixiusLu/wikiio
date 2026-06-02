@@ -31,7 +31,7 @@ packaging==26.1
 passlib==1.7.4
 prompt_toolkit==3.0.52
 psycopg2-binary==2.9.11
-puremagic==2.2.0
+puremagic==1.30
 pyasn1==0.6.3
 pydantic==2.13.2
 pydantic-settings==2.13.1
