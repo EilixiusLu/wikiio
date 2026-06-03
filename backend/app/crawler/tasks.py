@@ -11,6 +11,7 @@ from app.models.page import Page
 from app.models.revision import Revision
 from app.crawler.mediawiki import MediaWikiClient
 from app.utils.logger import crawler_logger as logger
+from app.utils.cache import cache_delete, cache_clear_pattern
 
 
 def utcnow():
@@ -148,6 +149,21 @@ async def crawl_single_page(
         db.add(db_rev)
 
     await db.commit()
+
+    # --- 缓存失效 ---
+    try:
+        await cache_delete(f"page:{db_page.id}")
+        await cache_delete(f"page:{db_page.id}:site-rating")
+        await cache_clear_pattern(f"pages:list:{site.site_id}:*")
+        await cache_clear_pattern(f"pages:count:{site.site_id}*")
+        await cache_clear_pattern(f"pages:stats:{site.site_id}*")
+        await cache_clear_pattern(f"pages:top-authors:{site.site_id}:*")
+        await cache_clear_pattern("pages:rankings:*")
+        if db_page.author:
+            await cache_clear_pattern(f"pages:author:{db_page.author}:*")
+        await cache_delete(f"search:categories:{site.site_id}")
+    except Exception:
+        pass
 
 async def crawl_site_incremental(site_id: str):
     """增量更新：只爬取最近60分钟内发生变动的页面"""

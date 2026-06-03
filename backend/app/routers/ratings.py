@@ -8,6 +8,7 @@ from app.models.user import User
 from app.routers.users import get_current_user
 from app.utils.logger import rating_logger
 from app.schemas.rating import RatingCreate
+from app.utils.cache import cache_delete, cache_clear_pattern
 
 router = APIRouter(prefix="/ratings", tags=["评分"])
 
@@ -113,6 +114,14 @@ async def rate_page(
 
     await db.commit()
 
+    # 失效相关缓存
+    try:
+        await cache_delete(f"page:{page_id}")
+        await cache_delete(f"page:{page_id}:site-rating")
+        await cache_clear_pattern("pages:rankings:*")
+    except Exception:
+        pass
+
     rating_logger.info(
         f"user={current_user.id}({current_user.fandom_username}) "
         f"page={page_id}({page.title}) "
@@ -161,4 +170,13 @@ async def delete_rating(
         page.rating_avg = round(float(row.avg), 2) if row.avg else 0.0
 
     await db.commit()
+
+    # 失效相关缓存
+    try:
+        await cache_delete(f"page:{page_id}")
+        await cache_delete(f"page:{page_id}:site-rating")
+        await cache_clear_pattern("pages:rankings:*")
+    except Exception:
+        pass
+
     return {"message": "已删除评分"}

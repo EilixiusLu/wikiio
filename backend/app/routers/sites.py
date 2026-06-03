@@ -7,6 +7,7 @@ from app.routers.users import get_current_user
 from app.models.user import User
 from app.schemas.site import SiteCreate
 from app.crawler.tasks import crawl_site_incremental, crawl_site_full
+from app.utils.cache import cached, cache_delete, cache_clear_pattern
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/sites", tags=["维基站点"])
 
 @router.get("/")
+@cached(ttl=300, key_prefix="sites:list")
 async def list_sites(db: AsyncSession = Depends(get_db)):
     """获取所有已接入的维基站点列表"""
     result = await db.execute(
@@ -38,6 +40,7 @@ async def list_sites(db: AsyncSession = Depends(get_db)):
     ]
 
 @router.get("/{site_id}")
+@cached(ttl=300, key_prefix="sites:{site_id}")
 async def get_site(
     site_id: str,
     db: AsyncSession = Depends(get_db)
@@ -88,6 +91,8 @@ async def create_site(
     db.add(site)
     await db.commit()
     await db.refresh(site)
+    # 失效站点列表缓存
+    await cache_delete("sites:list")
     return site
 
 @router.post("/{site_id}/crawl")
@@ -139,4 +144,7 @@ async def delete_site(
 
     await db.delete(site)
     await db.commit()
+    # 失效站点相关缓存
+    await cache_delete(f"sites:{site_id}")
+    await cache_delete("sites:list")
     return {"message": f"已删除站点 {site.name}"}

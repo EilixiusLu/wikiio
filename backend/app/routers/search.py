@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func, text
 from app.database import get_db
 from app.models.page import Page
+from app.utils.cache import cached
 from typing import Optional
 import json
 
@@ -150,6 +151,7 @@ async def search(
 
 
 @router.get("/categories")
+@cached(ttl=300, key_prefix="search:categories:{site_id}")
 async def list_categories(
     site_id: str,
     db: AsyncSession = Depends(get_db)

@@ -8,12 +8,14 @@ from typing import Optional
 from app.models.site import Site
 from app.models.user import User
 from app.crawler.mediawiki import MediaWikiClient
+from app.utils.cache import cached
 import json
 
 
 router = APIRouter(prefix="/pages", tags=["页面"])
 
 @router.get("/")
+@cached(ttl=120, key_prefix="pages:list:{site_id}:{author}:{category}:{skip}:{limit}:{order_by}")
 async def list_pages(
     site_id: str,
     category: Optional[str] = None,
@@ -64,6 +66,7 @@ async def list_pages(
     return output
 
 @router.get("/count")
+@cached(ttl=120, key_prefix="pages:count:{site_id}")
 async def count_pages(
     site_id: str,
     db: AsyncSession = Depends(get_db)
@@ -75,6 +78,7 @@ async def count_pages(
     return {"count": result.scalar()}
 
 @router.get("/stats")
+@cached(ttl=300, key_prefix="pages:stats:{site_id}")
 async def get_stats(
     site_id: str,
     db: AsyncSession = Depends(get_db)
@@ -110,6 +114,7 @@ async def get_stats(
     }
 
 @router.get("/top-authors")
+@cached(ttl=300, key_prefix="pages:top-authors:{site_id}:{limit}")
 async def get_top_authors(
     site_id: str,
     limit: int = 10,
@@ -129,6 +134,7 @@ async def get_top_authors(
 
 
 @router.get("/rankings/by-rating")
+@cached(ttl=300, key_prefix="pages:rankings:by-rating:{site_id}:{skip}:{limit}")
 async def ranking_by_rating(
     site_id: str,
     skip: int = 0,
@@ -158,6 +164,7 @@ async def ranking_by_rating(
     ]
 
 @router.get("/rankings/by-author")
+@cached(ttl=300, key_prefix="pages:rankings:by-author:{site_id}:{order_by}:{skip}:{limit}")
 async def ranking_by_author(
     site_id: str,
     order_by: str = "page_count",
@@ -206,6 +213,7 @@ async def ranking_by_author(
         for r in rows
     ]
 @router.get("/author/{author_name}")
+@cached(ttl=120, key_prefix="pages:author:{author_name}:list:{site_id}:{skip}:{limit}")
 async def get_author_pages(
     author_name: str,
     site_id: Optional[str] = None,
@@ -248,6 +256,7 @@ async def get_author_pages(
     }
 
 @router.get("/author/{author_name}/stats")
+@cached(ttl=300, key_prefix="pages:author:{author_name}:stats")
 async def get_author_stats(
     author_name: str,
     db: AsyncSession = Depends(get_db)
@@ -297,6 +306,7 @@ async def get_author_stats(
         ]
     }   
 @router.get("/author/{author_name}/profile")
+@cached(ttl=600, key_prefix="pages:author:{author_name}:profile")
 async def get_author_profile(
     author_name: str,
     db: AsyncSession = Depends(get_db)
@@ -318,6 +328,7 @@ async def get_author_profile(
     }
 
 @router.get("/{page_id}")
+@cached(ttl=300, key_prefix="page:{page_id}")
 async def get_page(
     page_id: int,
     db: AsyncSession = Depends(get_db)
@@ -365,6 +376,7 @@ async def get_page(
     }
 
 @router.get("/{page_id}/site-rating")
+@cached(ttl=600, key_prefix="page:{page_id}:site-rating")
 async def get_site_rating(
     page_id: int,
     db: AsyncSession = Depends(get_db)

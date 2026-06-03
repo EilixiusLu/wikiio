@@ -7,6 +7,7 @@ from app.models.page import Page
 from app.models.rating import Rating
 from app.models.site import Site
 from app.routers.users import get_current_user
+from app.utils.cache import cache_delete
 from pathlib import Path
 import os
 
@@ -93,6 +94,8 @@ async def approve_site(
     site.status = "approved"
     site.crawl_enabled = True
     await db.commit()
+    await cache_delete(f"sites:{site_id}")
+    await cache_delete("sites:list")
     return {"message": f"站点 {site.name} 已审核通过"}
 
 @router.post("/sites/{site_id}/reject")
@@ -108,4 +111,6 @@ async def reject_site(
         raise HTTPException(status_code=404, detail="站点不存在")
     site.status = "rejected"
     await db.commit()
+    await cache_delete(f"sites:{site_id}")
+    await cache_delete("sites:list")
     return {"message": f"站点 {site.name} 已拒绝"}

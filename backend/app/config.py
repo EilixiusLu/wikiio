@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # CORS 允许的来源（逗号分隔，用于 Docker 等环境配置）
     CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1"
 
+    # Redis 缓存配置
+    REDIS_CACHE_TTL_DEFAULT: int = 300       # 默认缓存 TTL（秒）
+    REDIS_CACHE_PREFIX: str = "wikiio:"       # 缓存键前缀
+
     # 爬虫配置
     CRAWL_REQUESTS_PER_SECOND: float = 0.33        # 爬虫请求速率（越低越安全）
     CRAWL_INCREMENTAL_WINDOW_MINUTES: int = 120     # 增量更新窗口（分钟）
