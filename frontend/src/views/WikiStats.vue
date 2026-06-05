@@ -3,19 +3,15 @@
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="site">
 
-      <!-- 站点头部 -->
       <div class="site-header">
-        <div class="site-info">
-          <div class="platform-badge" :class="site.platform">
-            {{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}
-          </div>
-          <h1>{{ site.name }}</h1>
-          <p class="site-desc" v-if="site.description">{{ site.description }}</p>
-          <a :href="site.base_url" target="_blank" class="site-link">访问维基 →</a>
-        </div>
+        <span class="platform-badge" :class="site.platform">
+          {{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}
+        </span>
+        <h1>{{ site.name }}</h1>
+        <p class="site-desc" v-if="site.description">{{ site.description }}</p>
+        <a :href="site.base_url" target="_blank" class="site-link">访问维基 <i class="fa fa-arrow-right"></i></a>
       </div>
 
-      <!-- 数据统计 -->
       <div class="stats-grid" v-if="stats">
         <div class="stat-card">
           <div class="stat-number">{{ stats.total_pages }}</div>
@@ -36,37 +32,38 @@
       </div>
 
       <div class="main-grid">
-        <!-- 最新页面 -->
         <div class="section">
           <div class="section-header">
             <h2>最新页面</h2>
-            <a :href="`/search?site=${siteId}`" class="more-link">查看更多</a>
+            <a :href="`/search?site=${siteId}`" class="more-link">查看更多 <i class="fa fa-arrow-right"></i></a>
           </div>
           <div v-if="pagesLoading" class="loading-sm">加载中...</div>
           <div v-else>
             <div class="page-item" v-for="page in pages" :key="page.id" @click="goToPage(page.id)">
-              <div class="page-title">{{ page.title }}</div>
-              <div class="page-meta">
-                <a :href="`/author/${page.author}`" class="author-link" @click.stop>{{ page.author || '未知' }}</a>
-                <span>{{ page.word_count }} 字</span>
-                <span>{{ formatDate(page.last_edited_at) }}</span>
+              <div class="page-main">
+                <div class="page-title">{{ page.title }}</div>
+                <div class="page-meta">
+                  <a :href="`/author/${page.author}`" class="author-link" @click.stop>{{ page.author || '未知' }}</a>
+                  <span>{{ page.word_count }} 字</span>
+                  <span>{{ formatDate(page.last_edited_at) }}</span>
+                </div>
+                <div class="page-cats">
+                  <span class="cat-tag" v-for="cat in page.categories.slice(0,3)" :key="cat">{{ cat }}</span>
+                </div>
               </div>
-              <div class="page-cats">
-                <span class="cat-tag" v-for="cat in page.categories.slice(0,3)" :key="cat">{{ cat }}</span>
-              </div>
+              <i class="fa fa-chevron-right more-arrow"></i>
             </div>
           </div>
           <div class="load-more" v-if="hasMore" @click="loadMore">加载更多</div>
         </div>
 
-        <!-- 创作者排名 -->
         <div class="section">
           <div class="section-header">
             <h2>创作者排名</h2>
-            <a :href="`/rankings?site=${siteId}`" class="more-link">完整榜单</a>
+            <a :href="`/rankings?site=${siteId}`" class="more-link">完整榜单 <i class="fa fa-arrow-right"></i></a>
           </div>
           <div class="author-item" v-for="(author, index) in topAuthors" :key="author.author">
-            <span class="rank" :class="'rank-' + (index + 1)">{{ index + 1 }}</span>
+            <span class="rank">{{ index + 1 }}</span>
             <a :href="`/author/${author.author}`" class="author-name">{{ author.author }}</a>
             <span class="author-count">{{ author.page_count }} 篇</span>
           </div>
@@ -84,7 +81,6 @@ import { pageAPI, siteAPI } from '../api/index.js'
 
 const route = useRoute()
 const router = useRouter()
-
 const siteId = route.params.siteId
 const site = ref(null)
 const stats = ref(null)
@@ -95,15 +91,9 @@ const pagesLoading = ref(true)
 const skip = ref(0)
 const hasMore = ref(true)
 
-function formatNumber(n) {
-  return n ? n.toLocaleString('zh-CN') : '0'
-}
-function formatDate(d) {
-  return d ? new Date(d).toLocaleDateString('zh-CN') : ''
-}
-function goToPage(id) {
-  router.push(`/page/${id}`)
-}
+function formatNumber(n) { return n ? n.toLocaleString('zh-CN') : '0' }
+function formatDate(d) { return d ? new Date(d).toLocaleDateString('zh-CN') : '' }
+function goToPage(id) { router.push(`/page/${id}`) }
 
 async function loadPages() {
   pagesLoading.value = true
@@ -112,115 +102,87 @@ async function loadPages() {
     pages.value.push(...result)
     hasMore.value = result.length === 20
     skip.value += result.length
-  } finally {
-    pagesLoading.value = false
-  }
+  } finally { pagesLoading.value = false }
 }
 
-async function loadMore() {
-  await loadPages()
-}
+async function loadMore() { await loadPages() }
 
 onMounted(async () => {
   try {
     const sites = await siteAPI.list()
     site.value = sites.find(s => s.site_id === siteId)
     if (!site.value) { loading.value = false; return }
-
-    const [statsRes, authorsRes] = await Promise.all([
-      pageAPI.stats(siteId),
-      pageAPI.topAuthors(siteId, 10),
-    ])
+    const [statsRes, authorsRes] = await Promise.all([pageAPI.stats(siteId), pageAPI.topAuthors(siteId, 10)])
     stats.value = statsRes
     topAuthors.value = authorsRes
     await loadPages()
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
+  } catch (e) { console.error(e) }
+  finally { loading.value = false }
 })
 </script>
 
 <style scoped>
-.wiki-stats-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
-.loading { text-align: center; padding: 3rem; color: #888; }
-.loading-sm { text-align: center; padding: 1rem; color: #888; }
-.error { text-align: center; padding: 3rem; color: #e74c3c; }
+.wiki-stats-page { max-width: 1100px; margin: 0 auto; padding: 60px 1.5rem; }
 
-.site-header {
-  background: white;
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-.platform-badge {
-  display: inline-block;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-.platform-badge.fandom { background: #e8f0fc; color: #185897; }
+.site-header { text-align: center; margin-bottom: 48px; }
+.platform-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 4px; margin-bottom: 12px; }
+.platform-badge.fandom { background: #e8f0fc; color: var(--color-primary); }
 .platform-badge.miraheze { background: #e8f8f0; color: #27ae60; }
-h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
-.site-desc { color: #888; font-size: 0.9rem; margin-bottom: 0.6rem; }
-.site-link { color: #185897; font-size: 0.88rem; text-decoration: none; }
+.site-header h1 { font-size: 28px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; margin-bottom: 8px; }
+.site-desc { font-size: 17px; color: var(--color-muted); margin-bottom: 12px; }
+.site-link { font-size: 14px; color: var(--color-primary); }
 .site-link:hover { text-decoration: underline; }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px; }
 .stat-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.2rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: 24px; text-align: center;
 }
-.stat-number { font-size: 1.8rem; font-weight: bold; color: #185897; }
-.stat-label { color: #888; font-size: 0.82rem; margin-top: 0.3rem; }
+.stat-number { font-size: 36px; font-weight: 600; color: var(--color-primary); }
+.stat-label { font-size: 14px; color: var(--color-muted); margin-top: 8px; }
 
-.main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+.main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
 .section {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: 24px;
 }
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-h2 { font-size: 1rem; font-weight: 600; color: #333; }
-.more-link { font-size: 0.82rem; color: #185897; text-decoration: none; }
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.section-header h2 { font-size: 21px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; }
+.more-link { font-size: 14px; color: var(--color-primary); }
 
-.page-item { padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+.page-item { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--color-hairline); cursor: pointer; }
 .page-item:last-child { border-bottom: none; }
-.page-item:hover { background: #f9f9f9; margin: 0 -1rem; padding: 0.8rem 1rem; }
-.page-title { font-weight: 500; color: #1a1a2e; margin-bottom: 0.3rem; }
-.page-meta { display: flex; gap: 0.8rem; color: #888; font-size: 0.82rem; margin-bottom: 0.3rem; align-items: center; }
-.author-link { color: #185897; text-decoration: none; }
+.page-main { flex: 1; min-width: 0; }
+.page-title { font-size: 17px; font-weight: 500; color: var(--color-ink); margin-bottom: 4px; }
+.page-meta { display: flex; gap: 12px; color: var(--color-muted); font-size: 14px; align-items: center; }
+.author-link { color: var(--color-primary); }
 .author-link:hover { text-decoration: underline; }
-.page-cats { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-.cat-tag { font-size: 0.72rem; background: #f0f0f0; padding: 0.1rem 0.4rem; border-radius: 8px; color: #666; }
+.page-cats { display: flex; gap: 4px; margin-top: 4px; }
+.cat-tag { font-size: 12px; background: var(--color-parchment); padding: 1px 8px; border-radius: var(--radius-pill); color: var(--color-muted); }
+.more-arrow { color: var(--color-muted); font-size: 14px; flex-shrink: 0; margin-left: 12px; }
 
-.load-more { text-align: center; padding: 0.8rem; color: #185897; cursor: pointer; font-size: 0.88rem; }
+.load-more { text-align: center; padding: 16px 0 0; color: var(--color-primary); cursor: pointer; font-size: 14px; }
 
-.author-item { display: flex; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #f0f0f0; }
+.author-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--color-hairline); }
 .author-item:last-child { border-bottom: none; }
 .rank {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: #ddd; color: white;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-parchment); color: var(--color-ink);
   display: flex; align-items: center; justify-content: center;
-  font-size: 0.72rem; font-weight: bold; margin-right: 0.8rem; flex-shrink: 0;
+  font-size: 14px; font-weight: 600; margin-right: 12px; flex-shrink: 0;
 }
-.rank-1 { background: #f5a623; }
-.rank-2 { background: #9b9b9b; }
-.rank-3 { background: #c47e3a; }
-.author-name { flex: 1; color: #185897; text-decoration: none; font-size: 0.9rem; }
+.author-name { flex: 1; color: var(--color-primary); font-size: 17px; }
 .author-name:hover { text-decoration: underline; }
-.author-count { color: #888; font-size: 0.82rem; }
+.author-count { color: var(--color-muted); font-size: 14px; }
+
+.loading, .loading-sm, .error { text-align: center; padding: 40px 0; color: var(--color-muted); }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .main-grid { grid-template-columns: 1fr; }
+}
 </style>

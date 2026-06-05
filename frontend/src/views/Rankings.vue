@@ -1,27 +1,24 @@
 <template>
   <div class="rankings-page">
     <div class="page-header">
-      <h1>作者排名</h1>
+      <h1>排名</h1>
       <div class="site-selector">
-        <label>选择站点：</label>
+        <label>选择站点</label>
         <select v-model="selectedSite" @change="onSiteChange">
-          <option v-for="site in sites" :key="site.site_id" :value="site.site_id">
-            {{ site.name }}
-          </option>
+          <option v-for="site in sites" :key="site.site_id" :value="site.site_id">{{ site.name }}</option>
         </select>
       </div>
     </div>
 
-    <!-- Tab切换 -->
     <div class="tabs">
       <button :class="{ active: tab === 'rating' }" @click="switchTab('rating')">
-        ★ 评分榜
+        <i class="fa fa-star"></i> 评分榜
       </button>
       <button :class="{ active: tab === 'author_pages' }" @click="switchTab('author_pages')">
-        📄 作者页面数榜
+        <i class="fa fa-file-text-o"></i> 页面数榜
       </button>
       <button :class="{ active: tab === 'author_rating' }" @click="switchTab('author_rating')">
-        🏆 作者评分榜
+        <i class="fa fa-trophy"></i> 作者评分榜
       </button>
     </div>
 
@@ -30,10 +27,10 @@
 
       <!-- 评分榜 -->
       <div v-else-if="tab === 'rating'">
-        <div v-if="ratingList.length === 0" class="empty">暂无评分数据，快去评分吧！</div>
+        <div v-if="ratingList.length === 0" class="empty">暂无评分数据</div>
         <div class="rank-list" v-else>
           <div class="rank-item" v-for="(page, index) in ratingList" :key="page.id" @click="goToPage(page.id)">
-            <div class="rank-num" :class="rankClass(index)">{{ index + 1 }}</div>
+            <span class="rank-num">{{ index + 1 }}</span>
             <div class="rank-main">
               <div class="rank-title">{{ page.title }}</div>
               <div class="rank-meta">
@@ -48,7 +45,7 @@
             <div class="rank-score">
               <div class="score-num">{{ page.rating_avg.toFixed(1) }}</div>
               <div class="score-stars">
-                <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= Math.round(page.rating_avg) }">★</span>
+                <i v-for="i in 5" :key="i" class="fa fa-star star" :class="{ filled: i <= Math.round(page.rating_avg) }"></i>
               </div>
               <div class="score-count">{{ page.rating_count }} 人</div>
             </div>
@@ -56,13 +53,13 @@
         </div>
       </div>
 
-      <!-- 作者页面数榜 / 作者评分榜 -->
+      <!-- 作者榜 -->
       <div v-else>
         <div class="rank-list">
-          <div class="rank-item author-item" v-for="(author, index) in authorList" :key="author.author">
-            <div class="rank-num" :class="rankClass(index)">{{ index + 1 }}</div>
+          <div class="rank-item" v-for="(author, index) in authorList" :key="author.author">
+            <span class="rank-num">{{ index + 1 }}</span>
             <div class="rank-main">
-              <div class="rank-title">{{ author.author }}</div>
+              <a :href="`/author/${author.author}`" class="rank-title">{{ author.author }}</a>
               <div class="rank-meta">
                 <span>{{ author.page_count }} 篇文章</span>
                 <span>{{ author.total_words.toLocaleString() }} 字</span>
@@ -73,7 +70,7 @@
               <div class="score-label" v-if="tab === 'author_pages'">篇</div>
               <template v-else>
                 <div class="score-stars">
-                  <span v-for="i in 5" :key="i" class="star" :class="{ filled: i <= Math.round(author.avg_rating) }">★</span>
+                  <i v-for="i in 5" :key="i" class="fa fa-star star" :class="{ filled: i <= Math.round(author.avg_rating) }"></i>
                 </div>
                 <div class="score-count">{{ author.avg_rating.toFixed(1) }} 分</div>
               </template>
@@ -98,170 +95,91 @@ const ratingList = ref([])
 const authorList = ref([])
 const loading = ref(false)
 
-function formatDate(d) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('zh-CN')
-}
-
-function goToPage(id) {
-  router.push(`/page/${id}`)
-}
-
-function rankClass(index) {
-  if (index === 0) return 'gold'
-  if (index === 1) return 'silver'
-  if (index === 2) return 'bronze'
-  return ''
-}
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('zh-CN') }
+function goToPage(id) { router.push(`/page/${id}`) }
 
 async function loadData() {
   if (!selectedSite.value) return
   loading.value = true
   try {
-    if (tab.value === 'rating') {
-      ratingList.value = await pageAPI.rankingByRating(selectedSite.value)
-    } else if (tab.value === 'author_pages') {
-      authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'page_count')
-    } else {
-      authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'rating')
-    }
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
+    if (tab.value === 'rating') ratingList.value = await pageAPI.rankingByRating(selectedSite.value)
+    else if (tab.value === 'author_pages') authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'page_count')
+    else authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'rating')
+  } catch (e) { console.error(e) }
+  finally { loading.value = false }
 }
 
-async function switchTab(t) {
-  tab.value = t
-  await loadData()
-}
-
-async function onSiteChange() {
-  await loadData()
-}
+async function switchTab(t) { tab.value = t; await loadData() }
+async function onSiteChange() { await loadData() }
 
 onMounted(async () => {
   try {
     sites.value = await siteAPI.list()
-    if (sites.value.length > 0) {
-      selectedSite.value = sites.value[0].site_id
-      await loadData()
-    }
-  } catch (e) {
-    console.error(e)
-  }
+    if (sites.value.length > 0) { selectedSite.value = sites.value[0].site_id; await loadData() }
+  } catch (e) { console.error(e) }
 })
 </script>
 
 <style scoped>
-.rankings-page { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-h1 { font-size: 1.5rem; font-weight: 700; }
-
-.site-selector { display: flex; align-items: center; gap: 0.5rem; }
-.site-selector label { color: #666; font-size: 0.9rem; }
+.rankings-page { max-width: 900px; margin: 0 auto; padding: 60px 1.5rem; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+.page-header h1 { font-size: 28px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; }
+.site-selector { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.site-selector label { color: var(--color-muted); }
 .site-selector select {
-  padding: 0.4rem 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  outline: none;
+  padding: 6px 12px; border: 1px solid var(--color-hairline); border-radius: 8px;
+  font-size: 14px; font-family: inherit; color: var(--color-ink); outline: none; background: var(--color-canvas);
 }
-.site-selector select:focus { border-color: #185897; }
+.site-selector select:focus { border-color: var(--color-primary); }
 
-.tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 0;
-}
+.tabs { display: flex; gap: 4px; margin-bottom: 32px; border-bottom: 1px solid var(--color-hairline); padding-bottom: 0; }
 .tabs button {
-  padding: 0.6rem 1.2rem;
-  border: none;
-  background: none;
-  color: #666;
-  cursor: pointer;
-  font-size: 0.9rem;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s;
+  padding: 10px 20px; border: none; background: none;
+  color: var(--color-muted); cursor: pointer; font-size: 14px; font-family: inherit;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
 }
-.tabs button:hover { color: #185897; }
-.tabs button.active { color: #185897; border-bottom-color: #185897; font-weight: 500; }
+.tabs button:hover { color: var(--color-primary); }
+.tabs button.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
 
-.loading { text-align: center; padding: 3rem; color: #888; }
-.empty { text-align: center; padding: 3rem; color: #aaa; }
-
-.rank-list { display: flex; flex-direction: column; gap: 0.8rem; }
-
+.rank-list { display: flex; flex-direction: column; }
 .rank-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  background: white;
-  border-radius: 8px;
-  padding: 1rem 1.2rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  cursor: pointer;
-  transition: box-shadow 0.15s;
+  display: flex; align-items: center; gap: 16px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: 20px 24px; margin-bottom: 12px;
+  cursor: pointer; transition: border-color 0.2s;
 }
-.rank-item:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-.author-item { cursor: default; }
+.rank-item:hover { border-color: var(--color-primary); }
 
 .rank-num {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: #f0f0f0;
-  color: #666;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.9rem;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--color-parchment); color: var(--color-ink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 600; flex-shrink: 0;
 }
-.rank-num.gold { background: #ffd700; color: #7a5800; }
-.rank-num.silver { background: #c0c0c0; color: #444; }
-.rank-num.bronze { background: #cd7f32; color: white; }
 
 .rank-main { flex: 1; min-width: 0; }
 .rank-title {
-  font-weight: 600;
-  color: #1a1a2e;
-  margin-bottom: 0.3rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 17px; font-weight: 500; color: var(--color-ink); margin-bottom: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;
 }
-.rank-meta { display: flex; gap: 1rem; color: #888; font-size: 0.82rem; margin-bottom: 0.3rem; }
-.rank-cats { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-.cat-tag {
-  font-size: 0.72rem;
-  background: #f0f0f0;
-  padding: 0.1rem 0.4rem;
-  border-radius: 8px;
-  color: #666;
-}
+.rank-meta { display: flex; gap: 12px; color: var(--color-muted); font-size: 14px; }
+.rank-cats { display: flex; gap: 4px; margin-top: 4px; }
+.cat-tag { font-size: 12px; background: var(--color-parchment); padding: 1px 8px; border-radius: var(--radius-pill); color: var(--color-muted); }
 
-.rank-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-  min-width: 70px;
+.rank-score { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; min-width: 70px; }
+.score-num { font-size: 28px; font-weight: 600; color: var(--color-primary); line-height: 1; }
+.score-stars .star { font-size: 12px; color: var(--color-hairline); }
+.score-stars .star.filled { color: var(--color-primary); }
+.score-count { color: var(--color-muted); font-size: 12px; margin-top: 4px; }
+.score-label { color: var(--color-muted); font-size: 14px; }
+
+.loading, .empty { text-align: center; padding: 60px 0; color: var(--color-muted); }
+
+@media (max-width: 600px) {
+  .page-header { flex-direction: column; gap: 16px; align-items: flex-start; }
+  .tabs { flex-wrap: wrap; }
+  .rank-item { flex-wrap: wrap; padding: 16px; }
 }
-.score-num { font-size: 1.6rem; font-weight: bold; color: #f5a623; line-height: 1; }
-.score-stars .star { font-size: 0.85rem; color: #ddd; }
-.score-stars .star.filled { color: #f5a623; }
-.score-count { color: #aaa; font-size: 0.75rem; margin-top: 0.2rem; }
-.score-label { color: #888; font-size: 0.85rem; }
 </style>

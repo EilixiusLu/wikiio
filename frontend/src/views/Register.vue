@@ -16,7 +16,7 @@
         <label>密码</label>
         <input v-model="password" type="password" placeholder="至少8个字符" />
       </div>
-      <button @click="handleRegister" :disabled="loading">
+      <button class="btn-primary" @click="handleRegister" :disabled="loading">
         {{ loading ? '注册中...' : '注册' }}
       </button>
       <p>已有账号？<a href="/login">立即登录</a></p>
@@ -29,7 +29,6 @@ import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const authStore = useAuthStore()
-
 const email = ref('')
 const username = ref('')
 const password = ref('')
@@ -38,61 +37,42 @@ const success = ref('')
 const loading = ref(false)
 
 async function handleRegister() {
-  error.value = ''
-  success.value = ''
-  loading.value = true
-  try {
-    await authStore.register(email.value, username.value, password.value)
-    success.value = '注册成功！请前往登录。'
-  } catch (err) {
-    error.value = err.detail || '注册失败，请稍后再试'
-  } finally {
-    loading.value = false
-  }
+  error.value = ''; success.value = ''; loading.value = true
+  try { await authStore.register(email.value, username.value, password.value); success.value = '注册成功！请前往登录。' }
+  catch (err) { error.value = err.detail || '注册失败，请稍后再试' }
+  finally { loading.value = false }
 }
 </script>
 
 <style scoped>
-.page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-}
+.page { min-height: 80vh; display: flex; align-items: center; justify-content: center; padding: 2rem; }
 .card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 400px;
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: 40px; width: 100%; max-width: 420px;
 }
-h2 { margin-bottom: 1.5rem; text-align: center; }
-.form-group { margin-bottom: 1rem; }
-label { display: block; margin-bottom: 0.3rem; font-weight: 500; }
+h2 { font-size: 24px; font-weight: 600; color: var(--color-ink); margin-bottom: 24px; letter-spacing: -0.02em; }
+.form-group { margin-bottom: 20px; }
+label { display: block; font-size: 14px; font-weight: 500; color: var(--color-ink); margin-bottom: 6px; }
 input {
-  width: 100%;
-  padding: 0.6rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-  box-sizing: border-box;
+  width: 100%; padding: 12px 16px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 8px; font-size: 17px; font-family: inherit;
+  color: var(--color-ink); outline: none; background: var(--color-canvas);
 }
-button {
-  width: 100%;
-  padding: 0.7rem;
-  background: #185897;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-  cursor: pointer;
-  margin-top: 0.5rem;
+input:focus { border-color: var(--color-primary); }
+.btn-primary {
+  width: 100%; padding: 12px;
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  font-size: 17px; font-family: inherit; cursor: pointer;
+  margin-top: 8px; transition: opacity 0.15s;
 }
-button:disabled { background: #aaa; cursor: not-allowed; }
-.error { color: red; margin-bottom: 1rem; font-size: 0.9rem; }
-.success { color: green; margin-bottom: 1rem; font-size: 0.9rem; }
-p { text-align: center; margin-top: 1rem; }
-a { color: #185897; }
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { color: #e74c3c; font-size: 14px; margin-bottom: 16px; }
+.success { color: #27ae60; font-size: 14px; margin-bottom: 16px; }
+p { text-align: center; margin-top: 20px; font-size: 14px; color: var(--color-muted); }
+p a { color: var(--color-primary); }
 </style>

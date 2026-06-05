@@ -4,25 +4,9 @@
 
     <!-- 系统统计 -->
     <div class="stats-grid" v-if="stats">
-      <div class="stat-card">
-        <div class="num">{{ stats.total_users }}</div>
-        <div class="label">注册用户</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">{{ stats.verified_users }}</div>
-        <div class="label">已验证用户</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">{{ stats.total_pages }}</div>
-        <div class="label">收录页面</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">{{ stats.total_ratings }}</div>
-        <div class="label">评分总数</div>
-      </div>
-      <div class="stat-card">
-        <div class="num">{{ stats.total_sites }}</div>
-        <div class="label">接入站点</div>
+      <div class="stat-card" v-for="(item, i) in statItems" :key="i">
+        <div class="num">{{ item.value }}</div>
+        <div class="label">{{ item.label }}</div>
       </div>
     </div>
 
@@ -31,23 +15,14 @@
       <div class="card-header">
         <h2>日志查看</h2>
         <div class="log-tabs">
-          <button
-            v-for="t in logTypes" :key="t.key"
-            :class="{ active: logType === t.key }"
-            @click="switchLog(t.key)"
-          >{{ t.label }}</button>
+          <button v-for="t in logTypes" :key="t.key" :class="{ active: logType === t.key }" @click="switchLog(t.key)">{{ t.label }}</button>
         </div>
       </div>
       <div class="log-box" ref="logBox">
         <div v-if="logLoading" class="log-loading">加载中...</div>
         <div v-else-if="logLines.length === 0" class="log-empty">暂无日志</div>
         <div v-else>
-          <div
-            v-for="(line, i) in logLines"
-            :key="i"
-            class="log-line"
-            :class="getLogClass(line)"
-          >{{ line }}</div>
+          <div v-for="(line, i) in logLines" :key="i" class="log-line" :class="getLogClass(line)">{{ line }}</div>
         </div>
       </div>
       <div class="log-footer">
@@ -56,99 +31,46 @@
       </div>
     </div>
 
-    <!-- 站点管理 -->
     <!-- 接入管理 -->
     <div class="card">
       <div class="card-header">
         <h2>接入管理</h2>
-        <button class="btn-add" @click="showAddForm = !showAddForm">
-          {{ showAddForm ? '收起' : '+ 接入新维基' }}
-        </button>
+        <button class="btn-add" @click="showAddForm = !showAddForm">{{ showAddForm ? '收起' : '+ 接入新维基' }}</button>
       </div>
-
-      <!-- 新增表单 -->
       <div class="add-form" v-if="showAddForm">
         <div class="form-grid">
-          <div class="form-group">
-            <label>平台 *</label>
-            <select v-model="newSite.platform">
-              <option value="fandom">Fandom</option>
-              <option value="miraheze">Miraheze</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>是否启用 RatePage 扩展</label>
-            <select v-model="newSite.has_ratepage">
-              <option :value="false">否</option>
-              <option :value="true">是</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>维基 URL *</label>
-            <input v-model="newSite.base_url" placeholder="如 https://scpfoundation.fandom.com/zh" />
-          </div>
-          <div class="form-group">
-            <label>维基名称 *</label>
-            <input v-model="newSite.name" placeholder="如 SCP基金会中文Wiki" />
-          </div>
-          <div class="form-group">
-            <label>维基编号 (site_id) *</label>
-            <input v-model="newSite.site_id" placeholder="如 scp-zh" />
-          </div>
-          <div class="form-group">
-            <label>语言</label>
-            <input v-model="newSite.language" placeholder="zh" />
-          </div>
-          <div class="form-group full">
-            <label>简介</label>
-            <input v-model="newSite.description" placeholder="维基简介（选填）" />
-          </div>
+          <div class="form-group"><label>平台 *</label><select v-model="newSite.platform"><option value="fandom">Fandom</option><option value="miraheze">Miraheze</option></select></div>
+          <div class="form-group"><label>RatePage</label><select v-model="newSite.has_ratepage"><option :value="false">否</option><option :value="true">是</option></select></div>
+          <div class="form-group"><label>维基 URL *</label><input v-model="newSite.base_url" placeholder="如 https://scpfoundation.fandom.com/zh" /></div>
+          <div class="form-group"><label>维基名称 *</label><input v-model="newSite.name" placeholder="如 SCP基金会中文Wiki" /></div>
+          <div class="form-group"><label>维基编号 *</label><input v-model="newSite.site_id" placeholder="如 scp-zh" /></div>
+          <div class="form-group"><label>语言</label><input v-model="newSite.language" placeholder="zh" /></div>
+          <div class="form-group full"><label>简介</label><input v-model="newSite.description" placeholder="维基简介（选填）" /></div>
         </div>
         <div class="form-actions">
-          <button class="btn-submit" @click="addSite" :disabled="addLoading">
-            {{ addLoading ? '提交中...' : '确认接入' }}
-          </button>
+          <button class="btn-submit" @click="addSite" :disabled="addLoading">{{ addLoading ? '提交中...' : '确认接入' }}</button>
           <span class="form-error" v-if="addError">{{ addError }}</span>
           <span class="form-success" v-if="addSuccess">{{ addSuccess }}</span>
         </div>
       </div>
 
-      <!-- 站点列表 -->
       <table class="site-table">
-        <thead>
-          <tr>
-            <th>维基名称</th>
-            <th>site_id</th>
-            <th>平台</th>
-            <th>语言</th>
-            <th>RatePage</th>
-            <th>状态</th>
-            <th>操作</th>
-          </tr>
-        </thead>
+        <thead><tr><th>维基名称</th><th>site_id</th><th>平台</th><th>语言</th><th>RatePage</th><th>状态</th><th>操作</th></tr></thead>
         <tbody>
           <tr v-for="site in sites" :key="site.site_id">
             <td>{{ site.name }}</td>
             <td><code>{{ site.site_id }}</code></td>
-            <td>
-              <span class="platform-badge" :class="site.platform">
-                {{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}
-              </span>
-            </td>
+            <td><span class="platform-badge" :class="site.platform">{{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}</span></td>
             <td>{{ site.language }}</td>
             <td>{{ site.has_ratepage ? '✅' : '—' }}</td>
-            <td>
-              <span class="status-badge" :class="site.status">
-                {{ statusLabel(site.status) }}
-              </span>
-            </td>
+            <td><span class="status-badge" :class="site.status">{{ statusLabel(site.status) }}</span></td>
             <td class="actions">
-              <button v-if="site.status === 'approved'" class="btn-crawl" @click="crawlSite(site.site_id, false)">增量</button>
-              <button v-if="site.status === 'approved'" class="btn-crawl-full" @click="crawlSite(site.site_id, true)">全量</button>
-              <button v-if="site.status === 'pending'" class="btn-approve" @click="approveSite(site.site_id)">通过</button>
-              <button v-if="site.status === 'pending'" class="btn-reject" @click="rejectSite(site.site_id)">拒绝</button>
-              <button v-if="site.status === 'approved'" class="btn-reject" @click="deleteSite(site.site_id)">删除</button>
-              <button v-if="site.status === 'rejected'" class="btn-approve" @click="approveSite(site.site_id)">重新通过</button>
+              <button v-if="site.status === 'approved'" class="btn-action btn-crawl" @click="crawlSite(site.site_id, false)">增量</button>
+              <button v-if="site.status === 'approved'" class="btn-action btn-crawl-full" @click="crawlSite(site.site_id, true)">全量</button>
+              <button v-if="site.status === 'pending'" class="btn-action btn-approve" @click="approveSite(site.site_id)">通过</button>
+              <button v-if="site.status === 'pending'" class="btn-action btn-reject" @click="rejectSite(site.site_id)">拒绝</button>
+              <button v-if="site.status === 'approved'" class="btn-action btn-reject" @click="deleteSite(site.site_id)">删除</button>
+              <button v-if="site.status === 'rejected'" class="btn-action btn-approve" @click="approveSite(site.site_id)">重新通过</button>
             </td>
           </tr>
         </tbody>
@@ -158,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { adminAPI, siteAPI } from '../api/index.js'
 
 const stats = ref(null)
@@ -176,265 +98,136 @@ const logTypes = [
   { key: 'error', label: '错误日志' },
 ]
 
+const statItems = computed(() => {
+  if (!stats.value) return []
+  return [
+    { label: '注册用户', value: stats.value.total_users },
+    { label: '已验证用户', value: stats.value.verified_users },
+    { label: '收录页面', value: stats.value.total_pages },
+    { label: '评分总数', value: stats.value.total_ratings },
+    { label: '接入站点', value: stats.value.total_sites },
+  ]
+})
+
 function getLogClass(line) {
   if (line.includes('[ERROR]')) return 'log-error'
-  if (line.includes('[WARNING]')) return 'log-warning'
-  if (line.includes('status=4') || line.includes('status=5')) return 'log-warning'
+  if (line.includes('[WARNING]') || line.includes('status=4') || line.includes('status=5')) return 'log-warning'
   return 'log-info'
 }
+function statusLabel(s) { return { pending: '待审核', approved: '已接入', rejected: '已拒绝' }[s] || s }
 
-function statusLabel(s) {
-  return { pending: '待审核', approved: '已接入', rejected: '已拒绝' }[s] || s
-}
-
-async function loadStats() {
-  const res = await adminAPI.stats()
-  stats.value = res
-}
-
+async function loadStats() { stats.value = await adminAPI.stats() }
 async function loadLogs() {
   logLoading.value = true
-  try {
-    const res = await adminAPI.logs(logType.value, 200)
-    logLines.value = res.lines
-    totalLines.value = res.total_lines || 0
-    await nextTick()
-    if (logBox.value) {
-      logBox.value.scrollTop = logBox.value.scrollHeight
-    }
-  } finally {
-    logLoading.value = false
-  }
+  try { const res = await adminAPI.logs(logType.value, 200); logLines.value = res.lines; totalLines.value = res.total_lines || 0; await nextTick(); if (logBox.value) logBox.value.scrollTop = logBox.value.scrollHeight }
+  finally { logLoading.value = false }
 }
+async function switchLog(type) { logType.value = type; await loadLogs() }
+async function loadSites() { sites.value = await adminAPI.sites() }
+async function approveSite(siteId) { await adminAPI.approveSite(siteId); await loadSites() }
+async function rejectSite(siteId) { await adminAPI.rejectSite(siteId); await loadSites() }
 
-async function switchLog(type) {
-  logType.value = type
-  await loadLogs()
-}
-
-async function loadSites() {
-  const res = await adminAPI.sites()
-  sites.value = res
-}
-
-async function approveSite(siteId) {
-  await adminAPI.approveSite(siteId)
-  await loadSites()
-}
-
-async function rejectSite(siteId) {
-  await adminAPI.rejectSite(siteId)
-  await loadSites()
-}
-
-onMounted(async () => {
-  await Promise.all([loadStats(), loadLogs(), loadSites()])
-})
+onMounted(async () => { await Promise.all([loadStats(), loadLogs(), loadSites()]) })
 
 const showAddForm = ref(false)
 const addLoading = ref(false)
 const addError = ref('')
 const addSuccess = ref('')
-const newSite = ref({
-  platform: 'fandom',
-  has_ratepage: false,
-  base_url: '',
-  name: '',
-  site_id: '',
-  language: 'zh',
-  description: '',
-})
+const newSite = ref({ platform: 'fandom', has_ratepage: false, base_url: '', name: '', site_id: '', language: 'zh', description: '' })
 
 async function addSite() {
-  addError.value = ''
-  addSuccess.value = ''
-  if (!newSite.value.name || !newSite.value.site_id || !newSite.value.base_url) {
-    addError.value = '请填写所有必填项'
-    return
-  }
+  addError.value = ''; addSuccess.value = ''
+  if (!newSite.value.name || !newSite.value.site_id || !newSite.value.base_url) { addError.value = '请填写所有必填项'; return }
   addLoading.value = true
   try {
-    await siteAPI.create({
-      name: newSite.value.name,
-      site_id: newSite.value.site_id,
-      base_url: newSite.value.base_url,
-      platform: newSite.value.platform,
-      has_ratepage: newSite.value.has_ratepage,
-      language: newSite.value.language,
-      description: newSite.value.description,
-    })
+    await siteAPI.create({ name: newSite.value.name, site_id: newSite.value.site_id, base_url: newSite.value.base_url, platform: newSite.value.platform, has_ratepage: newSite.value.has_ratepage, language: newSite.value.language, description: newSite.value.description })
     addSuccess.value = `站点 ${newSite.value.name} 接入成功！`
     newSite.value = { platform: 'fandom', has_ratepage: false, base_url: '', name: '', site_id: '', language: 'zh', description: '' }
     await loadSites()
     setTimeout(() => { addSuccess.value = ''; showAddForm.value = false }, 2000)
-  } catch (e) {
-    addError.value = e.detail || '接入失败'
-  } finally {
-    addLoading.value = false
-  }
+  } catch (e) { addError.value = e.detail || '接入失败' }
+  finally { addLoading.value = false }
 }
-
 async function crawlSite(siteId, full = false) {
   const type = full ? '全量爬取' : '增量更新'
   if (!confirm(`确定要对站点 ${siteId} 执行${type}吗？`)) return
-  await siteAPI.triggerCrawl(siteId, full)
-  alert(`${type}任务已提交！`)
+  await siteAPI.triggerCrawl(siteId, full); alert(`${type}任务已提交！`)
 }
-
-async function deleteSite(siteId) {
-  if (!confirm(`确定要删除站点 ${siteId} 吗？此操作不可恢复！`)) return
-  await siteAPI.delete(siteId)
-  await loadSites()
-}
+async function deleteSite(siteId) { if (!confirm(`确定要删除站点 ${siteId} 吗？`)) return; await siteAPI.delete(siteId); await loadSites() }
 </script>
 
 <style scoped>
-.admin-page { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; }
-h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1.5rem; }
+.admin-page { max-width: 1100px; margin: 0 auto; padding: 60px 1.5rem; }
+h1 { font-size: 28px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; margin-bottom: 32px; }
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.stat-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.2rem;
-  text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-.num { font-size: 1.8rem; font-weight: bold; color: #185897; }
-.label { color: #888; font-size: 0.82rem; margin-top: 0.3rem; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px; margin-bottom: 32px; }
+.stat-card { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-card); padding: 24px; text-align: center; }
+.num { font-size: 36px; font-weight: 600; color: var(--color-primary); }
+.label { font-size: 14px; color: var(--color-muted); margin-top: 8px; }
 
-.card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  margin-bottom: 1.5rem;
-}
-.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-h2 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 1rem; }
+.card { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-card); padding: 24px; margin-bottom: 24px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+h2 { font-size: 21px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; }
 
-.log-tabs { display: flex; gap: 0.4rem; }
-.log-tabs button {
-  padding: 0.3rem 0.8rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: white;
-  color: #666;
-  cursor: pointer;
-  font-size: 0.82rem;
-}
-.log-tabs button.active { background: #185897; color: white; border-color: #185897; }
+.log-tabs { display: flex; gap: 4px; }
+.log-tabs button { padding: 6px 12px; border: 1px solid var(--color-hairline); border-radius: 6px; background: var(--color-canvas); color: var(--color-muted); cursor: pointer; font-size: 14px; font-family: inherit; }
+.log-tabs button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 
-.log-box {
-  background: #1a1a2e;
-  border-radius: 6px;
-  padding: 1rem;
-  height: 400px;
-  overflow-y: auto;
-  font-family: 'Courier New', monospace;
-  font-size: 0.78rem;
-  line-height: 1.6;
-}
-.log-line { padding: 0.1rem 0; white-space: pre-wrap; word-break: break-all; }
+.log-box { background: #1d1d1f; border-radius: 12px; padding: 20px; height: 400px; overflow-y: auto; font-family: SF Mono, Monaco, monospace; font-size: 13px; line-height: 1.6; }
+.log-line { white-space: pre-wrap; word-break: break-all; }
 .log-info { color: #a8c7fa; }
 .log-warning { color: #ffd97d; }
 .log-error { color: #ff8a80; }
 .log-loading, .log-empty { color: #666; text-align: center; padding: 2rem; }
 
-.log-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.8rem;
-}
-.log-count { font-size: 0.82rem; color: #888; }
-.btn-refresh {
-  padding: 0.3rem 0.8rem;
-  background: #185897;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.82rem;
-}
+.log-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.log-count { font-size: 14px; color: var(--color-muted); }
+.btn-refresh { padding: 6px 16px; background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-pill); cursor: pointer; font-size: 14px; font-family: inherit; }
 
-.site-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.site-table th { text-align: left; padding: 0.6rem; border-bottom: 2px solid #f0f0f0; color: #888; font-weight: 500; }
-.site-table td { padding: 0.7rem 0.6rem; border-bottom: 1px solid #f5f5f5; }
-.site-table code { background: #f5f5f5; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.82rem; }
+.site-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.site-table th { text-align: left; padding: 12px 8px; border-bottom: 1px solid var(--color-hairline); color: var(--color-muted); font-weight: 500; font-size: 12px; text-transform: uppercase; }
+.site-table td { padding: 12px 8px; border-bottom: 1px solid var(--color-hairline); }
+.site-table code { background: var(--color-parchment); padding: 2px 8px; border-radius: 4px; font-size: 13px; }
 
-.status-badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 10px;
-  font-size: 0.78rem;
-  font-weight: 500;
-}
+.status-badge { padding: 2px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 500; }
 .status-badge.pending { background: #fff3cd; color: #856404; }
 .status-badge.approved { background: #d1fae5; color: #065f46; }
 .status-badge.rejected { background: #fee2e2; color: #991b1b; }
 
-.actions { display: flex; gap: 0.4rem; }
-.btn-approve {
-  padding: 0.2rem 0.6rem;
-  background: #d1fae5; color: #065f46;
-  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
-}
-.btn-reject {
-  padding: 0.2rem 0.6rem;
-  background: #fee2e2; color: #991b1b;
-  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
-}
+.actions { display: flex; gap: 4px; }
+.btn-action { padding: 4px 10px; border: 1px solid var(--color-hairline); border-radius: 6px; cursor: pointer; font-size: 13px; font-family: inherit; background: var(--color-canvas); }
+.btn-approve { color: #27ae60; border-color: #27ae60; }
+.btn-approve:hover { background: #d1fae5; }
+.btn-reject { color: #e74c3c; border-color: #e74c3c; }
+.btn-reject:hover { background: #fee2e2; }
+.btn-crawl { color: var(--color-primary); border-color: var(--color-primary); }
+.btn-crawl:hover { background: #e8f0fc; }
+.btn-crawl-full { color: #856404; border-color: #856404; }
+.btn-crawl-full:hover { background: #fff3cd; }
 
-.btn-add {
-  padding: 0.4rem 1rem;
-  background: #185897; color: white;
-  border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
-}
-.add-form {
-  background: #f9f9f9; border-radius: 8px;
-  padding: 1.2rem; margin-bottom: 1.2rem;
-}
-.form-grid {
-  display: grid; grid-template-columns: 1fr 1fr;
-  gap: 0.8rem; margin-bottom: 1rem;
-}
-.form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+.btn-add { padding: 8px 20px; background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-pill); cursor: pointer; font-size: 14px; font-family: inherit; }
+.btn-add:hover { opacity: 0.9; }
+
+.add-form { background: var(--color-parchment); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
 .form-group.full { grid-column: span 2; }
-.form-group label { font-size: 0.82rem; color: #555; font-weight: 500; }
-.form-group input, .form-group select {
-  padding: 0.5rem 0.8rem;
-  border: 1px solid #ddd; border-radius: 4px;
-  font-size: 0.88rem; outline: none;
-}
-.form-group input:focus, .form-group select:focus { border-color: #185897; }
-.form-actions { display: flex; align-items: center; gap: 1rem; }
-.btn-submit {
-  padding: 0.5rem 1.2rem;
-  background: #185897; color: white;
-  border: none; border-radius: 4px; cursor: pointer;
-}
-.btn-submit:disabled { background: #aaa; cursor: not-allowed; }
-.form-error { color: #e74c3c; font-size: 0.85rem; }
-.form-success { color: #27ae60; font-size: 0.85rem; }
-.btn-crawl {
-  padding: 0.2rem 0.6rem;
-  background: #e8f0fc; color: #185897;
-  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
-}
-.btn-crawl-full {
-  padding: 0.2rem 0.6rem;
-  background: #fff3cd; color: #856404;
-  border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;
-}
-.platform-badge {
-  font-size: 0.75rem; font-weight: 600;
-  padding: 0.2rem 0.5rem; border-radius: 3px;
-}
-.platform-badge.fandom { background: #e8f0fc; color: #185897; }
+.form-group label { font-size: 14px; color: var(--color-ink); font-weight: 500; }
+.form-group input, .form-group select { padding: 10px 16px; border: 1px solid var(--color-hairline); border-radius: 8px; font-size: 17px; font-family: inherit; color: var(--color-ink); outline: none; background: var(--color-canvas); }
+.form-group input:focus, .form-group select:focus { border-color: var(--color-primary); }
+.form-actions { display: flex; align-items: center; gap: 16px; }
+.btn-submit { padding: 10px 28px; background: var(--color-primary); color: #fff; border: none; border-radius: var(--radius-pill); cursor: pointer; font-size: 17px; font-family: inherit; }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-error { color: #e74c3c; font-size: 14px; }
+.form-success { color: #27ae60; font-size: 14px; }
+
+.platform-badge { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+.platform-badge.fandom { background: #e8f0fc; color: var(--color-primary); }
 .platform-badge.miraheze { background: #e8f8f0; color: #27ae60; }
+
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(3, 1fr); }
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: span 1; }
+}
 </style>
