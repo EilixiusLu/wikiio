@@ -1,4 +1,5 @@
 import json
+import time
 from functools import wraps
 
 from fastapi import Response
@@ -10,6 +11,43 @@ from app.utils.logger import error_logger
 
 _pool: ConnectionPool | None = None
 
+# ---- 可用性快速检测 ----
+# 如果本机没有运行 Redis，每次连接尝试都会阻塞 socket_timeout 秒，
+# 导致每个请求额外等待数秒。这里用一个标志位在首次失败后跳过后续尝试。
+_redis_available: bool | None = None   # None=未检测, True=可用, False=不可用
+_redis_checked_at: float = 0.0
+_RECHECK_INTERVAL: float = 60.0        # 不可用后每隔 60s 重试一次
+
+
+async def _check_redis() -> bool:
+    """检测 Redis 是否可用（PING 一次），更新全局标志"""
+    global _redis_available, _redis_checked_at
+    _redis_checked_at = time.monotonic()
+    try:
+        r = get_redis()
+        await r.ping()
+        _redis_available = True
+        return True
+    except Exception:
+        _redis_available = False
+        return False
+
+
+async def _should_skip() -> bool:
+    """判断是否应该跳过缓存操作（Redis 不可用时跳过以避免超时）"""
+    global _redis_available
+    if _redis_available is True:
+        return False  # 之前验证过可用，正常使用
+    if _redis_available is None:
+        # 首次使用，必须检查一次
+        return not await _check_redis()
+    # _redis_available is False
+    elapsed = time.monotonic() - _redis_checked_at
+    if elapsed >= _RECHECK_INTERVAL:
+        # 间隔到了，重试一次
+        return not await _check_redis()
+    return True  # 跳过，避免超时
+
 
 def get_redis() -> Redis:
     """获取 Redis 客户端（惰性连接池，单例）"""
@@ -18,8 +56,8 @@ def get_redis() -> Redis:
         _pool = ConnectionPool.from_url(
             settings.REDIS_URL,
             decode_responses=True,
-            socket_connect_timeout=2,
-            socket_timeout=2,
+            socket_connect_timeout=0.5,
+            socket_timeout=0.5,
             max_connections=10,
         )
     return Redis.from_pool(_pool)
@@ -31,7 +69,9 @@ def _prefixed(key: str) -> str:
 
 
 async def cache_get(key: str) -> str | None:
-    """读取缓存，失败返回 None"""
+    """读取缓存，Redis 不可用或失败返回 None"""
+    if await _should_skip():
+        return None
     try:
         redis = get_redis()
         val = await redis.get(_prefixed(key))
@@ -42,7 +82,9 @@ async def cache_get(key: str) -> str | None:
 
 
 async def cache_set(key: str, value, ttl: int) -> None:
-    """写入缓存，失败静默忽略"""
+    """写入缓存，Redis 不可用或失败静默忽略"""
+    if await _should_skip():
+        return
     try:
         redis = get_redis()
         encoded = json.dumps(jsonable_encoder(value), ensure_ascii=False)
@@ -52,7 +94,9 @@ async def cache_set(key: str, value, ttl: int) -> None:
 
 
 async def cache_delete(key: str) -> None:
-    """删除单个缓存键，失败静默忽略"""
+    """删除单个缓存键，Redis 不可用或失败静默忽略"""
+    if await _should_skip():
+        return
     try:
         redis = get_redis()
         await redis.delete(_prefixed(key))
@@ -62,6 +106,8 @@ async def cache_delete(key: str) -> None:
 
 async def cache_clear_pattern(pattern: str) -> None:
     """按模式删除缓存键（使用 SCAN 非阻塞扫描）"""
+    if await _should_skip():
+        return
     try:
         redis = get_redis()
         full_pattern = _prefixed(pattern)
@@ -105,7 +151,7 @@ def cached(ttl: int, key_prefix: str):
             # 缓存未命中，执行原函数
             result = await func(*args, **kwargs)
 
-            # 异步写入缓存（不阻塞响应）
+            # 异步写入缓存
             await cache_set(key, result, ttl)
 
             return result
