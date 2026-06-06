@@ -289,13 +289,13 @@ onMounted(async () => {
 }
 
 .result-item {
-  padding: var(--space-5) 0;
-  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--space-4) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: 0 calc(-1 * var(--space-4));
   cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.result-item:last-child { border-bottom: none; }
-.result-item:hover { background-color: var(--color-parchment); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-5) var(--space-6); }
+.result-item:hover { background-color: #e8f0fc; }
 .result-title {
   font-size: var(--text-base); font-weight: 500;
   color: var(--color-ink); margin-bottom: var(--space-2);

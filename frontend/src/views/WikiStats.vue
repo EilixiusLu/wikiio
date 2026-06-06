@@ -17,7 +17,7 @@
 
           <div class="stats-grid" v-if="stats">
             <div class="stat-card">
-              <div class="stat-number">{{ stats.total_pages }}</div>
+              <div class="stat-number">{{ stats.total_pages.toLocaleString() }}</div>
               <div class="stat-label">收录页面</div>
             </div>
             <div class="stat-card">
@@ -25,11 +25,11 @@
               <div class="stat-label">总字数</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number">{{ stats.total_authors }}</div>
+              <div class="stat-number">{{ stats.total_authors.toLocaleString() }}</div>
               <div class="stat-label">创作者</div>
             </div>
             <div class="stat-card">
-              <div class="stat-number">{{ stats.total_revisions }}</div>
+              <div class="stat-number">{{ stats.total_revisions.toLocaleString() }}</div>
               <div class="stat-label">编辑次数</div>
             </div>
           </div>
@@ -61,7 +61,7 @@
                   <span>{{ page.word_count }} 字</span>
                   <span>{{ formatDate(page.last_edited_at) }}</span>
                 </div>
-                <div class="page-cats">
+                <div class="page-cats" v-if="page.categories && page.categories.length">
                   <span class="cat-tag" v-for="cat in page.categories.slice(0,3)" :key="cat">
                     {{ cat }}
                   </span>
@@ -86,7 +86,7 @@
               v-for="(author, index) in topAuthors"
               :key="author.author"
             >
-              <span class="rank">{{ index + 1 }}</span>
+              <span class="rank" :class="'rank-' + Math.min(index + 1, 3)">{{ index + 1 }}</span>
               <a :href="`/author/${author.author}`" class="author-name">
                 {{ author.author }}
               </a>
@@ -176,7 +176,11 @@ onMounted(async () => {
   margin-bottom: var(--space-2);
 }
 .site-desc { font-size: var(--text-base); color: var(--color-muted); margin-bottom: var(--space-3); }
-.site-link { font-size: var(--text-sm); color: var(--color-primary); }
+.site-link {
+  font-size: var(--text-sm); color: var(--color-primary);
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+.site-link:hover { opacity: 0.7; }
 
 .stats-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
@@ -190,8 +194,11 @@ onMounted(async () => {
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.stat-card:hover { border-color: var(--color-primary); background-color: var(--color-parchment); }
-.stat-number { font-size: var(--text-3xl); font-weight: 600; color: var(--color-primary); }
+.stat-card:hover { background-color: #e8f0fc; border-color: var(--color-primary); }
+.stat-number {
+  font-size: var(--text-3xl); font-weight: 600;
+  color: var(--color-primary);
+}
 .stat-label { font-size: var(--text-sm); color: var(--color-muted); margin-top: var(--space-2); }
 
 .main-grid {
@@ -211,17 +218,22 @@ onMounted(async () => {
   font-size: var(--text-lg); font-weight: 600;
   color: var(--color-ink); letter-spacing: -0.02em;
 }
-.more-link { font-size: var(--text-sm); color: var(--color-primary); }
+.more-link {
+  font-size: var(--text-sm); color: var(--color-primary);
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+.more-link:hover { opacity: 0.7; }
 
+/* ── 列表项（无割裂感版） ── */
 .page-item {
   display: flex; align-items: center;
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  margin: 0 calc(-1 * var(--space-4));
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.page-item:last-child { border-bottom: none; }
-.page-item:hover { background-color: var(--color-parchment); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-4) var(--space-6); }
+.page-item:hover { background-color: #e8f0fc; }
 .page-main { flex: 1; min-width: 0; }
 .page-title {
   font-size: var(--text-base); font-weight: 500;
@@ -235,34 +247,50 @@ onMounted(async () => {
 .author-link { color: var(--color-primary); }
 .page-cats { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
 .cat-tag {
-  font-size: var(--text-xs); background: var(--color-parchment);
+  font-size: var(--text-xs);
+  background: #d4e4fb;
+  color: var(--color-primary);
   padding: 1px var(--space-2); border-radius: var(--radius-pill);
-  color: var(--color-muted);
 }
 .more-arrow {
   color: var(--color-muted); font-size: var(--text-sm);
   flex-shrink: 0; margin-left: var(--space-3);
+  transition: transform var(--duration-fast) var(--ease-apple);
 }
+.page-item:hover .more-arrow { transform: translateX(3px); }
+
 .load-more {
   text-align: center; padding: var(--space-4) 0 0;
   color: var(--color-primary); cursor: pointer; font-size: var(--text-sm);
+  margin: 0 calc(-1 * var(--space-4));
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-smooth);
 }
+.load-more:hover { background-color: #e8f0fc; }
 
+/* ── 创作者排名 ── */
 .author-item {
   display: flex; align-items: center;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: 0 calc(-1 * var(--space-4));
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.author-item:last-child { border-bottom: none; }
-.author-item:hover { background-color: var(--color-parchment); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-3) var(--space-6); }
+.author-item:hover { background-color: var(--color-parchment); }
 .rank {
   width: 28px; height: 28px; border-radius: 50%;
   background: var(--color-parchment); color: var(--color-ink);
   display: flex; align-items: center; justify-content: center;
   font-size: var(--text-sm); font-weight: 600;
   margin-right: var(--space-3); flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
+.rank-1 { background: #ffd700; color: #7a5800; }
+.rank-2 { background: #c0c0c0; color: #444; }
+.rank-3 { background: #cd7f32; color: #fff; }
+.author-item:hover .rank { transform: scale(1.08); }
 .author-name { flex: 1; color: var(--color-primary); font-size: var(--text-base); }
 .author-count { color: var(--color-muted); font-size: var(--text-sm); }
 

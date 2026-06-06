@@ -250,7 +250,7 @@ onUnmounted(() => {
 
 /* ── 移动端过渡 ── */
 .slide-enter-active {
-  transition: opacity var(--duration-base) var(--ease-smooth);
+  transition: opacity var(--duration-base) var(--ease-spring);
 }
 .slide-leave-active {
   transition: opacity var(--duration-fast) var(--ease-smooth);

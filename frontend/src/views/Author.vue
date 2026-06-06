@@ -18,10 +18,10 @@
             <div class="author-info">
               <h1>{{ authorName }}</h1>
               <div class="author-badges">
-                <span class="badge">{{ stats.total_pages }} 篇文章</span>
-                <span class="badge">{{ stats.total_words.toLocaleString() }} 字</span>
-                <span class="badge" v-if="stats.total_ratings > 0">
-                  {{ stats.total_ratings }} 次评分
+                <span class="badge"><i class="fa fa-file-text-o"></i> {{ stats.total_pages }} 篇</span>
+                <span class="badge"><i class="fa fa-font"></i> {{ stats.total_words.toLocaleString() }} 字</span>
+                <span class="badge badge-star" v-if="stats.total_ratings > 0">
+                  <i class="fa fa-star"></i> {{ stats.total_ratings }} 次评分
                 </span>
               </div>
             </div>
@@ -37,7 +37,7 @@
               <div class="site-name">{{ site.site_name }}</div>
               <div class="site-nums">
                 <div class="site-num">
-                  <div class="num">{{ site.page_count }}</div>
+                  <div class="num">{{ site.page_count.toLocaleString() }}</div>
                   <div class="num-label">篇</div>
                 </div>
                 <div class="site-num">
@@ -78,7 +78,7 @@
                 <span>{{ page.word_count }} 字</span>
                 <span>{{ formatDate(page.last_edited_at) }}</span>
               </div>
-              <div class="page-cats" v-if="page.categories.length">
+              <div class="page-cats" v-if="page.categories && page.categories.length">
                 <span class="cat-tag" v-for="cat in page.categories.slice(0,3)" :key="cat">
                   {{ cat }}
                 </span>
@@ -178,11 +178,13 @@ onMounted(async () => {
 
 .author-header { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-10); }
 .author-avatar-wrap { flex-shrink: 0; }
-.author-avatar, .author-avatar-img { width: 80px; height: 80px; border-radius: 50%; }
+.author-avatar, .author-avatar-img { width: 88px; height: 88px; border-radius: 50%; }
 .author-avatar {
-  background: var(--color-primary); color: #fff;
+  background: linear-gradient(135deg, var(--color-primary), #3a7fc1);
+  color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: var(--text-3xl); font-weight: 600;
+  box-shadow: 0 0 0 4px var(--color-parchment), 0 0 0 5px var(--color-hairline);
 }
 .author-avatar-img { object-fit: cover; }
 .author-info h1 {
@@ -196,27 +198,29 @@ onMounted(async () => {
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 500;
 }
+.badge-star { background: #fff8e6; color: #b8860b; }
+.badge i { margin-right: 2px; }
 
+/* ── 站点卡片 ── */
 .sites-stats { display: flex; gap: var(--space-4); margin-bottom: var(--space-10); flex-wrap: wrap; }
 .site-card {
   flex: 1; min-width: 160px;
   background: var(--color-canvas);
-  border: 1px solid var(--color-hairline);
+  border: 2px solid transparent;
   border-radius: var(--radius-card);
   padding: var(--space-5); cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.site-card:hover, .site-card.active {
-  border-color: var(--color-primary);
-  background-color: var(--color-parchment);
-}
+.site-card:hover { background-color: #e8f0fc; }
+.site-card.active { border-color: var(--color-primary); background-color: #e8f0fc; }
 .site-name { font-weight: 600; color: var(--color-ink); margin-bottom: var(--space-3); font-size: var(--text-sm); }
 .site-nums { display: flex; gap: var(--space-4); }
 .site-num { text-align: center; }
 .num { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); }
 .num-label { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-1); }
 
+/* ── 页面列表 ── */
 .pages-section {
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
@@ -246,13 +250,13 @@ onMounted(async () => {
 .page-list { display: flex; flex-direction: column; position: relative; }
 .page-item {
   display: flex; align-items: center; gap: var(--space-4);
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--color-hairline);
+  padding: var(--space-4) var(--space-4);
+  border-radius: var(--radius-sm);
+  margin: 0 calc(-1 * var(--space-4));
   cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.page-item:last-child { border-bottom: none; }
-.page-item:hover { background-color: var(--color-parchment); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-4) var(--space-6); }
+.page-item:hover { background-color: #e8f0fc; }
 .page-main { flex: 1; min-width: 0; }
 .page-title {
   font-size: var(--text-base); font-weight: 500; color: var(--color-ink);
@@ -269,15 +273,15 @@ onMounted(async () => {
 }
 .page-cats { display: flex; gap: var(--space-1); }
 .cat-tag {
-  font-size: var(--text-xs); background: var(--color-parchment);
+  font-size: var(--text-xs);
+  background: #d4e4fb; color: var(--color-primary);
   padding: 1px var(--space-2); border-radius: var(--radius-pill);
-  color: var(--color-muted);
 }
 .page-rating { flex-shrink: 0; text-align: center; min-width: 64px; }
 .page-rating.no-rating .rating-num { color: var(--color-hairline); }
 .rating-num { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); line-height: 1; }
 .rating-stars .star { font-size: var(--text-xs); color: var(--color-hairline); }
-.rating-stars .star.filled { color: var(--color-primary); }
+.rating-stars .star.filled { color: #f5a623; }
 .rating-count { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-1); }
 
 .pagination {

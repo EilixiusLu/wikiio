@@ -191,14 +191,14 @@ onMounted(async () => {
 .rank-item {
   display: flex; align-items: center; gap: var(--space-4);
   background: var(--color-canvas);
-  border: 1px solid var(--color-hairline);
+  border: 2px solid transparent;
   border-radius: var(--radius-card);
   padding: var(--space-5) var(--space-6);
   margin-bottom: var(--space-3); cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.rank-item:hover { border-color: var(--color-primary); background-color: var(--color-parchment); }
+.rank-item:hover { border-color: var(--color-primary); background-color: #e8f0fc; }
 
 .rank-num {
   width: 36px; height: 36px; border-radius: 50%;
