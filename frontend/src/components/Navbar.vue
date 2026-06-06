@@ -14,24 +14,30 @@
       </div>
 
       <div class="navbar-right">
-        <!-- 搜索图标 -->
         <a href="/search" class="nav-search-btn" title="搜索">
           <i class="fa fa-search"></i>
         </a>
 
-        <!-- 用户区域 -->
         <div class="navbar-user">
           <template v-if="authStore.isLoggedIn">
             <div class="user-menu" @click="toggleMenu">
-              <img v-if="authStore.user?.fandom_avatar_url" :src="authStore.user.fandom_avatar_url" class="avatar" />
-              <div v-else class="avatar-placeholder">{{ authStore.user?.username?.[0]?.toUpperCase() }}</div>
+              <img
+                v-if="authStore.user?.fandom_avatar_url"
+                :src="authStore.user.fandom_avatar_url"
+                class="avatar"
+              />
+              <div v-else class="avatar-placeholder">
+                {{ authStore.user?.username?.[0]?.toUpperCase() }}
+              </div>
               <span class="username">{{ authStore.user?.username }}</span>
               <i class="fa fa-chevron-down caret"></i>
-              <div class="dropdown" v-if="menuOpen" @click.stop>
-                <a href="/profile">个人主页</a>
-                <div class="divider"></div>
-                <a @click.prevent="handleLogout" href="#">退出登录</a>
-              </div>
+              <Transition name="dropdown">
+                <div class="dropdown" v-if="menuOpen" @click.stop>
+                  <a href="/profile">个人主页</a>
+                  <div class="divider"></div>
+                  <a @click.prevent="handleLogout" href="#">退出登录</a>
+                </div>
+              </Transition>
             </div>
           </template>
           <template v-else>
@@ -40,7 +46,6 @@
           </template>
         </div>
 
-        <!-- 移动端菜单按钮 -->
         <button class="menu-toggle" @click="mobileOpen = !mobileOpen" aria-label="菜单">
           <span class="hamburger" :class="{ open: mobileOpen }">
             <span></span><span></span><span></span>
@@ -49,8 +54,7 @@
       </div>
     </div>
 
-    <!-- 移动端下拉菜单 -->
-    <transition name="slide">
+    <Transition name="slide">
       <div class="mobile-menu" v-if="mobileOpen" @click.self="mobileOpen = false">
         <a href="/" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</a>
         <a href="/search" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</a>
@@ -66,7 +70,7 @@
           <a href="/register" @click="mobileOpen = false">注册</a>
         </template>
       </div>
-    </transition>
+    </Transition>
   </nav>
 </template>
 
@@ -82,11 +86,23 @@ const menuOpen = ref(false)
 const mobileOpen = ref(false)
 
 function toggleMenu() { menuOpen.value = !menuOpen.value }
-function handleLogout() { authStore.logout(); menuOpen.value = false; mobileOpen.value = false; router.push('/') }
-function closeMenu(e) { if (!e.target.closest('.user-menu')) menuOpen.value = false }
+function handleLogout() {
+  authStore.logout()
+  menuOpen.value = false
+  mobileOpen.value = false
+  router.push('/')
+}
+function closeMenu(e) {
+  if (!e.target.closest('.user-menu')) menuOpen.value = false
+}
 
-onMounted(() => { authStore.fetchMe(); document.addEventListener('click', closeMenu) })
-onUnmounted(() => { document.removeEventListener('click', closeMenu) })
+onMounted(() => {
+  authStore.fetchMe()
+  document.addEventListener('click', closeMenu)
+})
+onUnmounted(() => {
+  document.removeEventListener('click', closeMenu)
+})
 </script>
 
 <style scoped>
@@ -106,10 +122,25 @@ onUnmounted(() => { document.removeEventListener('click', closeMenu) })
 /* ── 桌面端导航链接 ── */
 .navbar-links { display: flex; align-items: center; gap: var(--space-6); }
 .navbar-links a {
-  color: var(--color-muted); font-size: var(--text-sm);
-  padding: var(--space-1) 0; transition: color 0.15s; font-weight: 500;
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  padding: var(--space-1) 0;
+  font-weight: 500;
+  position: relative;
 }
-.navbar-links a:hover, .navbar-links a.active { color: var(--color-primary); text-decoration: none; }
+.navbar-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 0;
+  width: 0; height: 1.5px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  transition: width var(--duration-base) var(--ease-apple);
+}
+.navbar-links a:hover,
+.navbar-links a.active { color: var(--color-primary); text-decoration: none; }
+.navbar-links a:hover::after,
+.navbar-links a.active::after { width: 100%; }
 
 /* ── 右侧区域 ── */
 .navbar-right { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
@@ -117,27 +148,49 @@ onUnmounted(() => { document.removeEventListener('click', closeMenu) })
   color: var(--color-muted); font-size: var(--text-base);
   width: var(--size-input); height: var(--size-input);
   display: flex; align-items: center; justify-content: center;
-  border-radius: var(--radius-sm); transition: 0.15s;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .nav-search-btn:hover { color: var(--color-primary); background: var(--color-parchment); text-decoration: none; }
+.nav-search-btn:active { transform: scale(0.92); }
 
-.menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: var(--space-2); }
+.menu-toggle {
+  display: none; background: none; border: none;
+  cursor: pointer; padding: var(--space-2);
+  transition: transform var(--duration-fast) var(--ease-apple);
+}
+.menu-toggle:active { transform: scale(0.92); }
 
 /* ── 用户菜单 ── */
 .navbar-user { display: flex; align-items: center; gap: var(--space-3); }
 .btn-nav {
   color: var(--color-muted); padding: var(--space-1) var(--space-3);
-  border-radius: 6px; font-size: var(--text-sm); font-weight: 500; transition: 0.15s;
+  border-radius: 6px; font-size: var(--text-sm); font-weight: 500;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .btn-nav:hover { color: var(--color-primary); text-decoration: none; background: var(--color-parchment); }
+.btn-nav:active { transform: scale(0.96); }
+
 .btn-nav-primary {
   background: var(--color-primary); color: #fff;
   padding: var(--space-1) var(--space-5); border-radius: var(--radius-pill);
-  font-size: var(--text-sm); font-weight: 500; transition: opacity 0.15s;
+  font-size: var(--text-sm); font-weight: 500;
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .btn-nav-primary:hover { opacity: 0.9; text-decoration: none; }
+.btn-nav-primary:active { transform: scale(0.96); }
 
-.user-menu { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; position: relative; padding: var(--space-1) var(--space-2); border-radius: 6px; }
+.user-menu {
+  display: flex; align-items: center; gap: var(--space-1);
+  cursor: pointer; position: relative;
+  padding: var(--space-1) var(--space-2); border-radius: 6px;
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
 .user-menu:hover { background: var(--color-parchment); }
 .username { color: var(--color-ink); font-size: var(--text-sm); }
 .caret { font-size: var(--text-xs); color: var(--color-muted); }
@@ -148,12 +201,18 @@ onUnmounted(() => { document.removeEventListener('click', closeMenu) })
   display: flex; align-items: center; justify-content: center;
   font-size: var(--text-xs); font-weight: 600;
 }
+
+/* ── 下拉菜单 ── */
 .dropdown {
   position: absolute; top: calc(100% + var(--space-2)); right: 0;
   background: var(--color-canvas); border: 1px solid var(--color-hairline);
   border-radius: 12px; min-width: 150px; overflow: hidden; z-index: 200;
 }
-.dropdown a { display: block; padding: var(--space-2) var(--space-4); color: var(--color-ink); font-size: var(--text-sm); }
+.dropdown a {
+  display: block; padding: var(--space-2) var(--space-4);
+  color: var(--color-ink); font-size: var(--text-sm);
+  transition: background-color var(--duration-fast) var(--ease-smooth);
+}
 .dropdown a:hover { background: var(--color-parchment); text-decoration: none; }
 .divider { height: 1px; background: var(--color-hairline); }
 
@@ -168,27 +227,37 @@ onUnmounted(() => { document.removeEventListener('click', closeMenu) })
   display: block; padding: var(--space-3) var(--space-4);
   color: var(--color-ink); font-size: var(--text-base); font-weight: 500;
   background: var(--color-canvas); border-bottom: 1px solid var(--color-hairline);
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth);
 }
 .mobile-menu a:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
 .mobile-menu a:last-of-type { border-radius: 0 0 var(--radius-sm) var(--radius-sm); border-bottom: none; }
-.mobile-menu a:hover, .mobile-menu a.active { background: var(--color-parchment); text-decoration: none; color: var(--color-primary); }
+.mobile-menu a:hover,
+.mobile-menu a.active { background: var(--color-parchment); text-decoration: none; color: var(--color-primary); }
 .mobile-divider { height: var(--space-2); }
 
 /* ── 汉堡图标 ── */
 .hamburger { display: flex; flex-direction: column; gap: 4px; width: 22px; }
 .hamburger span {
   display: block; height: 2px; background: var(--color-ink);
-  border-radius: 2px; transition: all 0.25s;
+  border-radius: 2px;
+  transition: transform var(--duration-base) var(--ease-apple),
+              opacity var(--duration-base) var(--ease-smooth);
 }
 .hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
 .hamburger.open span:nth-child(2) { opacity: 0; }
 .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
-/* ── 过渡动画 ── */
-.slide-enter-active, .slide-leave-active { transition: opacity 0.2s; }
-.slide-enter-from, .slide-leave-to { opacity: 0; }
+/* ── 移动端过渡 ── */
+.slide-enter-active {
+  transition: opacity var(--duration-base) var(--ease-smooth);
+}
+.slide-leave-active {
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+.slide-enter-from,
+.slide-leave-to { opacity: 0; }
 
-/* ── 响应式 ── */
 @media (max-width: 768px) {
   .navbar-links { display: none; }
   .navbar-user .username { display: none; }

@@ -370,11 +370,15 @@ async function copyMhCode() {
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-family: inherit;
+  transition: border-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .btn-logout:hover {
   border-color: var(--color-danger);
   color: var(--color-danger);
 }
+.btn-logout:active { transform: scale(0.96); }
 .user-card { position: relative; }
 .user-badges {
   display: flex;
@@ -405,13 +409,16 @@ async function copyMhCode() {
   padding: var(--space-2) var(--space-5);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-pill);
-  transition: all 0.15s;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .btn-author:hover {
   background: var(--color-primary);
   color: #fff;
   text-decoration: none;
 }
+.btn-author:active { transform: scale(0.96); }
 
 .card h2 {
   font-size: var(--text-lg);
@@ -463,8 +470,11 @@ async function copyMhCode() {
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-family: inherit;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
 .btn-danger:hover { background: #fee; }
+.btn-danger:active { transform: scale(0.96); }
 
 .hint {
   color: var(--color-muted);
@@ -486,6 +496,7 @@ async function copyMhCode() {
   color: var(--color-ink);
   outline: none;
   background: var(--color-canvas);
+  transition: border-color var(--duration-base) var(--ease-smooth);
 }
 .form-row input:focus { border-color: var(--color-primary); }
 
@@ -498,10 +509,15 @@ async function copyMhCode() {
   font-size: var(--text-base);
   cursor: pointer;
   font-family: inherit;
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
+.btn-primary:hover { opacity: 0.9; }
+.btn-primary:active { transform: scale(0.96); }
 .btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 .steps {
@@ -537,7 +553,11 @@ async function copyMhCode() {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
+.copy-btn:hover { opacity: 0.9; }
+.copy-btn:active { transform: scale(0.96); }
 
 .verify-actions {
   display: flex;

@@ -29,7 +29,7 @@
 
       <div v-else-if="tab === 'rating'">
         <div v-if="ratingList.length === 0" class="empty">暂无评分数据</div>
-        <div class="rank-list" v-else>
+        <TransitionGroup name="list" tag="div" class="rank-list" v-else>
           <div
             class="rank-item"
             v-for="(page, index) in ratingList"
@@ -62,43 +62,41 @@
               <div class="score-count">{{ page.rating_count }} 人</div>
             </div>
           </div>
-        </div>
+        </TransitionGroup>
       </div>
 
-      <div v-else>
-        <div class="rank-list">
-          <div
-            class="rank-item"
-            v-for="(author, index) in authorList"
-            :key="author.author"
-          >
-            <span class="rank-num">{{ index + 1 }}</span>
-            <div class="rank-main">
-              <a :href="`/author/${author.author}`" class="rank-title">
-                {{ author.author }}
-              </a>
-              <div class="rank-meta">
-                <span>{{ author.page_count }} 篇文章</span>
-                <span>{{ author.total_words.toLocaleString() }} 字</span>
-              </div>
-            </div>
-            <div class="rank-score">
-              <div class="score-num">{{ author.page_count }}</div>
-              <div class="score-label" v-if="tab === 'author_pages'">篇</div>
-              <template v-else>
-                <div class="score-stars">
-                  <i
-                    v-for="i in 5" :key="i"
-                    class="fa fa-star star"
-                    :class="{ filled: i <= Math.round(author.avg_rating) }"
-                  ></i>
-                </div>
-                <div class="score-count">{{ author.avg_rating.toFixed(1) }} 分</div>
-              </template>
+      <TransitionGroup v-else name="list" tag="div" class="rank-list">
+        <div
+          class="rank-item"
+          v-for="(author, index) in authorList"
+          :key="author.author"
+        >
+          <span class="rank-num">{{ index + 1 }}</span>
+          <div class="rank-main">
+            <a :href="`/author/${author.author}`" class="rank-title">
+              {{ author.author }}
+            </a>
+            <div class="rank-meta">
+              <span>{{ author.page_count }} 篇文章</span>
+              <span>{{ author.total_words.toLocaleString() }} 字</span>
             </div>
           </div>
+          <div class="rank-score">
+            <div class="score-num">{{ author.page_count }}</div>
+            <div class="score-label" v-if="tab === 'author_pages'">篇</div>
+            <template v-else>
+              <div class="score-stars">
+                <i
+                  v-for="i in 5" :key="i"
+                  class="fa fa-star star"
+                  :class="{ filled: i <= Math.round(author.avg_rating) }"
+                ></i>
+              </div>
+              <div class="score-count">{{ author.avg_rating.toFixed(1) }} 分</div>
+            </template>
+          </div>
         </div>
-      </div>
+      </TransitionGroup>
     </div>
   </div>
 </template>
@@ -116,13 +114,8 @@ const ratingList = ref([])
 const authorList = ref([])
 const loading = ref(false)
 
-function formatDate(d) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('zh-CN')
-}
-function goToPage(id) {
-  router.push(`/page/${id}`)
-}
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('zh-CN') }
+function goToPage(id) { router.push(`/page/${id}`) }
 
 async function loadData() {
   if (!selectedSite.value) return
@@ -135,90 +128,57 @@ async function loadData() {
     } else {
       authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'rating')
     }
-  } catch (e) {
-    console.error(e)
-  } finally {
-    loading.value = false
-  }
+  } catch (e) { console.error(e) }
+  finally { loading.value = false }
 }
 
-async function switchTab(t) {
-  tab.value = t
-  await loadData()
-}
-
-async function onSiteChange() {
-  await loadData()
-}
+async function switchTab(t) { tab.value = t; await loadData() }
+async function onSiteChange() { await loadData() }
 
 onMounted(async () => {
   try {
     sites.value = await siteAPI.list()
-    if (sites.value.length > 0) {
-      selectedSite.value = sites.value[0].site_id
-      await loadData()
-    }
-  } catch (e) {
-    console.error(e)
-  }
+    if (sites.value.length > 0) { selectedSite.value = sites.value[0].site_id; await loadData() }
+  } catch (e) { console.error(e) }
 })
 </script>
 
 <style scoped>
-.rankings-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--space-16) var(--space-6);
-}
+.rankings-page { max-width: 900px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
 
 .page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-8);
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: var(--space-8);
 }
 .page-header h1 {
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  color: var(--color-ink);
-  letter-spacing: -0.02em;
+  font-size: var(--text-2xl); font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.02em;
 }
-.site-selector {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-}
+.site-selector { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); }
 .site-selector label { color: var(--color-muted); }
 .site-selector select {
   padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  font-family: inherit;
-  color: var(--color-ink);
-  outline: none;
-  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline); border-radius: var(--radius-sm);
+  font-size: var(--text-sm); font-family: inherit;
+  color: var(--color-ink); outline: none; background: var(--color-canvas);
+  transition: border-color var(--duration-fast) var(--ease-smooth);
 }
 .site-selector select:focus { border-color: var(--color-primary); }
 
 .tabs {
-  display: flex;
-  gap: var(--space-1);
+  display: flex; gap: var(--space-1);
   margin-bottom: var(--space-8);
   border-bottom: 1px solid var(--color-hairline);
 }
 .tabs button {
   padding: var(--space-2) var(--space-5);
-  border: none;
-  background: none;
-  color: var(--color-muted);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-family: inherit;
+  border: none; background: none;
+  color: var(--color-muted); cursor: pointer;
+  font-size: var(--text-sm); font-family: inherit;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
-  transition: all 0.15s;
+  transition: color var(--duration-fast) var(--ease-smooth),
+              border-color var(--duration-fast) var(--ease-smooth);
 }
 .tabs button:hover { color: var(--color-primary); }
 .tabs button.active {
@@ -227,85 +187,50 @@ onMounted(async () => {
   font-weight: 500;
 }
 
-.rank-list { display: flex; flex-direction: column; }
+.rank-list { display: flex; flex-direction: column; position: relative; }
 .rank-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  display: flex; align-items: center; gap: var(--space-4);
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-card);
   padding: var(--space-5) var(--space-6);
-  margin-bottom: var(--space-3);
-  cursor: pointer;
-  transition: border-color 0.2s;
+  margin-bottom: var(--space-3); cursor: pointer;
+  transition: background-color var(--duration-base) var(--ease-smooth),
+              border-color var(--duration-base) var(--ease-smooth);
 }
-.rank-item:hover { border-color: var(--color-primary); }
+.rank-item:hover { border-color: var(--color-primary); background-color: var(--color-parchment); }
+
 .rank-num {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: var(--color-parchment);
-  color: var(--color-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-base);
-  font-weight: 600;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--color-parchment); color: var(--color-ink);
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-base); font-weight: 600; flex-shrink: 0;
 }
 .rank-main { flex: 1; min-width: 0; }
 .rank-title {
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--color-ink);
+  font-size: var(--text-base); font-weight: 500; color: var(--color-ink);
   margin-bottom: var(--space-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   display: block;
 }
-.rank-meta {
-  display: flex;
-  gap: var(--space-3);
-  color: var(--color-muted);
-  font-size: var(--text-sm);
-}
+.rank-meta { display: flex; gap: var(--space-3); color: var(--color-muted); font-size: var(--text-sm); }
 .rank-cats { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
 .cat-tag {
-  font-size: var(--text-xs);
-  background: var(--color-parchment);
-  padding: 1px var(--space-2);
-  border-radius: var(--radius-pill);
+  font-size: var(--text-xs); background: var(--color-parchment);
+  padding: 1px var(--space-2); border-radius: var(--radius-pill);
   color: var(--color-muted);
 }
 .rank-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-  min-width: 70px;
+  display: flex; flex-direction: column;
+  align-items: center; flex-shrink: 0; min-width: 70px;
 }
-.score-num {
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1;
-}
+.score-num { font-size: var(--text-2xl); font-weight: 600; color: var(--color-primary); line-height: 1; }
 .score-stars .star { font-size: var(--text-xs); color: var(--color-hairline); }
 .score-stars .star.filled { color: var(--color-primary); }
-.score-count {
-  color: var(--color-muted);
-  font-size: var(--text-xs);
-  margin-top: var(--space-1);
-}
+.score-count { color: var(--color-muted); font-size: var(--text-xs); margin-top: var(--space-1); }
 .score-label { color: var(--color-muted); font-size: var(--text-sm); }
 
-.loading, .empty {
-  text-align: center;
-  padding: var(--space-16) 0;
-  color: var(--color-muted);
-}
+.loading, .empty { text-align: center; padding: var(--space-16) 0; color: var(--color-muted); }
 
 @media (max-width: 600px) {
   .page-header { flex-direction: column; gap: var(--space-4); align-items: flex-start; }

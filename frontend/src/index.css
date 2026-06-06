@@ -45,6 +45,16 @@
   --size-input: 2.75rem;  /* 44px 搜索框/按钮高度 */
   --size-nav: 3.5rem;     /* 56px 导航栏高度 */
   --size-avatar: 1.75rem; /* 28px 头像尺寸 */
+
+  /* ── 动画时间轴 ── */
+  --duration-fast: 150ms;   /* 极小微交互：按钮按下 */
+  --duration-base: 300ms;   /* 标准过渡：悬浮、卡片展开 */
+  --duration-slow: 600ms;   /* 宏观结构：页面加载、元素进场 */
+
+  /* ── 贝塞尔曲线 ── */
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);          /* 苹果标志性柔和缓出 */
+  --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.05); /* 微弱回弹，仅用于菜单/模态框进场 */
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);            /* 标准平滑缓动 */
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -60,5 +70,41 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-a { color: var(--color-primary); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+a:hover { opacity: 0.8; }
+
+/* ── 全局进场动效 ── */
+.fade-up-enter-active {
+  transition: opacity var(--duration-slow) var(--ease-apple),
+              transform var(--duration-slow) var(--ease-apple);
+}
+.fade-up-enter-from { opacity: 0; transform: translateY(16px); }
+.fade-up-enter-to   { opacity: 1; transform: translateY(0); }
+
+/* ── 列表交错过渡 ── */
+.list-enter-active {
+  transition: opacity var(--duration-base) var(--ease-apple),
+              transform var(--duration-base) var(--ease-apple);
+}
+.list-leave-active {
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+  position: absolute;
+}
+.list-enter-from { opacity: 0; transform: translateY(12px); }
+.list-leave-to   { opacity: 0; }
+.list-move       { transition: transform var(--duration-base) var(--ease-apple); }
+
+/* ── 下拉菜单过渡 ── */
+.dropdown-enter-active {
+  transition: opacity var(--duration-fast) var(--ease-spring),
+              transform var(--duration-fast) var(--ease-spring);
+}
+.dropdown-leave-active {
+  transition: opacity var(--duration-fast) var(--ease-smooth);
+}
+.dropdown-enter-from { opacity: 0; transform: scale(0.92); }
+.dropdown-leave-to   { opacity: 0; }

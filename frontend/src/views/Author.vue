@@ -2,52 +2,57 @@
   <div class="author-page">
     <div v-if="loading" class="loading">加载中...</div>
     <div v-else-if="stats">
-      <div class="author-header">
-        <div class="author-avatar-wrap">
-          <img
-            v-if="authorProfile?.avatar_url"
-            :src="authorProfile.avatar_url"
-            class="author-avatar-img"
-          />
-          <div v-else class="author-avatar">{{ authorName[0]?.toUpperCase() }}</div>
-        </div>
-        <div class="author-info">
-          <h1>{{ authorName }}</h1>
-          <div class="author-badges">
-            <span class="badge">{{ stats.total_pages }} 篇文章</span>
-            <span class="badge">{{ stats.total_words.toLocaleString() }} 字</span>
-            <span class="badge" v-if="stats.total_ratings > 0">
-              {{ stats.total_ratings }} 次评分
-            </span>
+      <Transition name="fade-up" appear>
+        <div>
+          <div class="author-header">
+            <div class="author-avatar-wrap">
+              <img
+                v-if="authorProfile?.avatar_url"
+                :src="authorProfile.avatar_url"
+                class="author-avatar-img"
+              />
+              <div v-else class="author-avatar">
+                {{ authorName[0]?.toUpperCase() }}
+              </div>
+            </div>
+            <div class="author-info">
+              <h1>{{ authorName }}</h1>
+              <div class="author-badges">
+                <span class="badge">{{ stats.total_pages }} 篇文章</span>
+                <span class="badge">{{ stats.total_words.toLocaleString() }} 字</span>
+                <span class="badge" v-if="stats.total_ratings > 0">
+                  {{ stats.total_ratings }} 次评分
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div class="sites-stats">
-        <div
-          class="site-card"
-          v-for="site in stats.sites"
-          :key="site.site_id"
-          :class="{ active: selectedSite === site.site_id }"
-          @click="selectSite(site.site_id)"
-        >
-          <div class="site-name">{{ site.site_name }}</div>
-          <div class="site-nums">
-            <div class="site-num">
-              <div class="num">{{ site.page_count }}</div>
-              <div class="num-label">篇</div>
-            </div>
-            <div class="site-num">
-              <div class="num">{{ site.total_words.toLocaleString() }}</div>
-              <div class="num-label">字</div>
-            </div>
-            <div class="site-num" v-if="site.total_ratings > 0">
-              <div class="num">{{ site.avg_rating.toFixed(1) }}</div>
-              <div class="num-label">均分</div>
+          <div class="sites-stats">
+            <div
+              class="site-card"
+              v-for="site in stats.sites" :key="site.site_id"
+              :class="{ active: selectedSite === site.site_id }"
+              @click="selectSite(site.site_id)"
+            >
+              <div class="site-name">{{ site.site_name }}</div>
+              <div class="site-nums">
+                <div class="site-num">
+                  <div class="num">{{ site.page_count }}</div>
+                  <div class="num-label">篇</div>
+                </div>
+                <div class="site-num">
+                  <div class="num">{{ site.total_words.toLocaleString() }}</div>
+                  <div class="num-label">字</div>
+                </div>
+                <div class="site-num" v-if="site.total_ratings > 0">
+                  <div class="num">{{ site.avg_rating.toFixed(1) }}</div>
+                  <div class="num-label">均分</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </Transition>
 
       <div class="pages-section">
         <div class="section-header">
@@ -60,11 +65,10 @@
 
         <div v-if="pagesLoading" class="loading">加载中...</div>
         <div v-else-if="pagesData?.pages?.length === 0" class="empty">暂无文章</div>
-        <div v-else class="page-list">
+        <TransitionGroup name="list" tag="div" class="page-list" v-else>
           <div
             class="page-item"
-            v-for="page in pagesData?.pages"
-            :key="page.id"
+            v-for="page in pagesData?.pages" :key="page.id"
             @click="goToPage(page.id)"
           >
             <div class="page-main">
@@ -80,10 +84,7 @@
                 </span>
               </div>
             </div>
-            <div
-              class="page-rating"
-              :class="{ 'no-rating': page.rating_count === 0 }"
-            >
+            <div class="page-rating" :class="{ 'no-rating': page.rating_count === 0 }">
               <div class="rating-num">
                 {{ page.rating_count > 0 ? page.rating_avg.toFixed(1) : '—' }}
               </div>
@@ -99,7 +100,7 @@
               </div>
             </div>
           </div>
-        </div>
+        </TransitionGroup>
 
         <div class="pagination" v-if="(pagesData?.total || 0) > pageLimit">
           <button :disabled="pageSkip === 0" @click="prevPage">上一页</button>
@@ -140,16 +141,9 @@ const selectedSiteName = computed(() => {
 const currentPage = computed(() => Math.floor(pageSkip.value / pageLimit) + 1)
 const totalPages = computed(() => Math.ceil((pagesData.value?.total || 0) / pageLimit))
 
-function formatDate(d) {
-  if (!d) return ''
-  return new Date(d).toLocaleDateString('zh-CN')
-}
-function goToPage(id) {
-  router.push(`/page/${id}`)
-}
-function getSiteName(siteId) {
-  return sitesMap.value[siteId] || siteId
-}
+function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('zh-CN') }
+function goToPage(id) { router.push(`/page/${id}`) }
+function getSiteName(siteId) { return sitesMap.value[siteId] || siteId }
 
 async function loadPages() {
   pagesLoading.value = true
@@ -157,26 +151,11 @@ async function loadPages() {
     pagesData.value = await pageAPI.authorPages(
       authorName.value, selectedSite.value, pageSkip.value, pageLimit
     )
-  } finally {
-    pagesLoading.value = false
-  }
+  } finally { pagesLoading.value = false }
 }
-
-async function selectSite(siteId) {
-  selectedSite.value = siteId
-  pageSkip.value = 0
-  await loadPages()
-}
-
-async function prevPage() {
-  pageSkip.value = Math.max(0, pageSkip.value - pageLimit)
-  await loadPages()
-}
-
-async function nextPage() {
-  pageSkip.value += pageLimit
-  await loadPages()
-}
+async function selectSite(siteId) { selectedSite.value = siteId; pageSkip.value = 0; await loadPages() }
+async function prevPage() { pageSkip.value = Math.max(0, pageSkip.value - pageLimit); await loadPages() }
+async function nextPage() { pageSkip.value += pageLimit; await loadPages() }
 
 onMounted(async () => {
   try {
@@ -189,102 +168,54 @@ onMounted(async () => {
     stats.value = r[1]
     authorProfile.value = r[2]
     await loadPages()
-  } catch (e) {
-    console.error(e)
-    stats.value = null
-  } finally {
-    loading.value = false
-  }
+  } catch (e) { console.error(e); stats.value = null }
+  finally { loading.value = false }
 })
 </script>
 
 <style scoped>
-.author-page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--space-16) var(--space-6);
-}
+.author-page { max-width: 900px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
 
-.author-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-6);
-  margin-bottom: var(--space-10);
-}
+.author-header { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-10); }
 .author-avatar-wrap { flex-shrink: 0; }
-.author-avatar,
-.author-avatar-img {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-}
+.author-avatar, .author-avatar-img { width: 80px; height: 80px; border-radius: 50%; }
 .author-avatar {
-  background: var(--color-primary);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-3xl);
-  font-weight: 600;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: var(--text-3xl); font-weight: 600;
 }
 .author-avatar-img { object-fit: cover; }
 .author-info h1 {
-  font-size: var(--text-2xl);
-  font-weight: 600;
-  color: var(--color-ink);
-  letter-spacing: -0.02em;
+  font-size: var(--text-2xl); font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.02em;
   margin-bottom: var(--space-3);
 }
-.author-badges {
-  display: flex;
-  gap: var(--space-2);
-  flex-wrap: wrap;
-}
+.author-badges { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .badge {
-  background: #e8f0fc;
-  color: var(--color-primary);
+  background: #e8f0fc; color: var(--color-primary);
   padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-sm);
-  font-weight: 500;
+  border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 500;
 }
 
-.sites-stats {
-  display: flex;
-  gap: var(--space-4);
-  margin-bottom: var(--space-10);
-  flex-wrap: wrap;
-}
+.sites-stats { display: flex; gap: var(--space-4); margin-bottom: var(--space-10); flex-wrap: wrap; }
 .site-card {
-  flex: 1;
-  min-width: 160px;
+  flex: 1; min-width: 160px;
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-card);
-  padding: var(--space-5);
-  cursor: pointer;
-  transition: border-color 0.2s;
+  padding: var(--space-5); cursor: pointer;
+  transition: background-color var(--duration-base) var(--ease-smooth),
+              border-color var(--duration-base) var(--ease-smooth);
 }
-.site-card:hover,
-.site-card.active { border-color: var(--color-primary); }
-.site-name {
-  font-weight: 600;
-  color: var(--color-ink);
-  margin-bottom: var(--space-3);
-  font-size: var(--text-sm);
+.site-card:hover, .site-card.active {
+  border-color: var(--color-primary);
+  background-color: var(--color-parchment);
 }
+.site-name { font-weight: 600; color: var(--color-ink); margin-bottom: var(--space-3); font-size: var(--text-sm); }
 .site-nums { display: flex; gap: var(--space-4); }
 .site-num { text-align: center; }
-.num {
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-primary);
-}
-.num-label {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  margin-top: var(--space-1);
-}
+.num { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); }
+.num-label { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-1); }
 
 .pages-section {
   background: var(--color-canvas);
@@ -293,120 +224,81 @@ onMounted(async () => {
   padding: var(--space-6);
 }
 .section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-5);
+  display: flex; justify-content: space-between;
+  align-items: center; margin-bottom: var(--space-5);
 }
 .section-header h2 {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  color: var(--color-ink);
-  letter-spacing: -0.02em;
+  font-size: var(--text-lg); font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.02em;
 }
 .btn-all {
-  font-size: var(--text-sm);
-  color: var(--color-primary);
-  background: none;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-sm);
-  padding: var(--space-1) var(--space-3);
-  cursor: pointer;
-  font-family: inherit;
+  font-size: var(--text-sm); color: var(--color-primary);
+  background: none; border: 1px solid var(--color-primary);
+  border-radius: var(--radius-sm); padding: var(--space-1) var(--space-3);
+  cursor: pointer; font-family: inherit;
+  transition: background-color var(--duration-fast) var(--ease-smooth),
+              color var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
+.btn-all:hover { background: var(--color-primary); color: #fff; }
+.btn-all:active { transform: scale(0.96); }
 
+.page-list { display: flex; flex-direction: column; position: relative; }
 .page-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
+  display: flex; align-items: center; gap: var(--space-4);
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-hairline);
   cursor: pointer;
+  transition: background-color var(--duration-base) var(--ease-smooth);
 }
 .page-item:last-child { border-bottom: none; }
+.page-item:hover { background-color: var(--color-parchment); margin: 0 calc(-1 * var(--space-6)); padding: var(--space-4) var(--space-6); }
 .page-main { flex: 1; min-width: 0; }
 .page-title {
-  font-size: var(--text-base);
-  font-weight: 500;
-  color: var(--color-ink);
+  font-size: var(--text-base); font-weight: 500; color: var(--color-ink);
   margin-bottom: var(--space-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .page-meta {
-  display: flex;
-  gap: var(--space-3);
-  color: var(--color-muted);
-  font-size: var(--text-sm);
-  align-items: center;
+  display: flex; gap: var(--space-3);
+  color: var(--color-muted); font-size: var(--text-sm); align-items: center;
 }
 .site-badge {
-  background: #e8f0fc;
-  color: var(--color-primary);
-  padding: 1px var(--space-2);
-  border-radius: 4px;
-  font-size: var(--text-xs);
+  background: #e8f0fc; color: var(--color-primary);
+  padding: 1px var(--space-2); border-radius: 4px; font-size: var(--text-xs);
 }
 .page-cats { display: flex; gap: var(--space-1); }
 .cat-tag {
-  font-size: var(--text-xs);
-  background: var(--color-parchment);
-  padding: 1px var(--space-2);
-  border-radius: var(--radius-pill);
+  font-size: var(--text-xs); background: var(--color-parchment);
+  padding: 1px var(--space-2); border-radius: var(--radius-pill);
   color: var(--color-muted);
 }
-
-.page-rating {
-  flex-shrink: 0;
-  text-align: center;
-  min-width: 64px;
-}
+.page-rating { flex-shrink: 0; text-align: center; min-width: 64px; }
 .page-rating.no-rating .rating-num { color: var(--color-hairline); }
-.rating-num {
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--color-primary);
-  line-height: 1;
-}
+.rating-num { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); line-height: 1; }
 .rating-stars .star { font-size: var(--text-xs); color: var(--color-hairline); }
 .rating-stars .star.filled { color: var(--color-primary); }
-.rating-count {
-  font-size: var(--text-xs);
-  color: var(--color-muted);
-  margin-top: var(--space-1);
-}
+.rating-count { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-1); }
 
 .pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
+  display: flex; justify-content: center; align-items: center;
+  gap: var(--space-4); margin-top: var(--space-6);
 }
 .pagination button {
   padding: var(--space-2) var(--space-5);
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  font-family: inherit;
-  font-size: var(--text-sm);
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  cursor: pointer; font-family: inherit; font-size: var(--text-sm);
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
 }
+.pagination button:hover { opacity: 0.9; }
+.pagination button:active { transform: scale(0.96); }
 .pagination button:disabled {
   background: var(--color-parchment);
-  color: var(--color-muted);
-  cursor: not-allowed;
+  color: var(--color-muted); cursor: not-allowed; transform: none;
 }
-.pagination span {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
-}
+.pagination span { font-size: var(--text-sm); color: var(--color-muted); }
 
-.loading, .empty, .error {
-  text-align: center;
-  padding: var(--space-10) 0;
-  color: var(--color-muted);
-}
+.loading, .empty, .error { text-align: center; padding: var(--space-10) 0; color: var(--color-muted); }
 </style>
