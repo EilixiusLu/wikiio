@@ -4,32 +4,69 @@
       <a href="/" class="navbar-logo">
         <img src="/wikiio-logo.svg" alt="Wikiio" class="logo-img" />
       </a>
+
+      <!-- 桌面端导航链接 -->
       <div class="navbar-links">
         <a href="/" :class="{ active: route.path === '/' }">首页</a>
         <a href="/search" :class="{ active: route.path === '/search' }">搜索</a>
         <a href="/rankings" :class="{ active: route.path === '/rankings' }">排名</a>
         <a v-if="authStore.user?.role >= 3" href="/admin" :class="{ active: route.path === '/admin' }">管理</a>
       </div>
-      <div class="navbar-user">
-        <template v-if="authStore.isLoggedIn">
-          <div class="user-menu" @click="toggleMenu">
-            <img v-if="authStore.user?.fandom_avatar_url" :src="authStore.user.fandom_avatar_url" class="avatar" />
-            <div v-else class="avatar-placeholder">{{ authStore.user?.username?.[0]?.toUpperCase() }}</div>
-            <span class="username">{{ authStore.user?.username }}</span>
-            <i class="fa fa-chevron-down" style="font-size:10px;"></i>
-            <div class="dropdown" v-if="menuOpen">
-              <a href="/profile">个人主页</a>
-              <div class="divider"></div>
-              <a @click.prevent="handleLogout" href="#">退出登录</a>
+
+      <div class="navbar-right">
+        <!-- 搜索图标 -->
+        <a href="/search" class="nav-search-btn" title="搜索">
+          <i class="fa fa-search"></i>
+        </a>
+
+        <!-- 用户区域 -->
+        <div class="navbar-user">
+          <template v-if="authStore.isLoggedIn">
+            <div class="user-menu" @click="toggleMenu">
+              <img v-if="authStore.user?.fandom_avatar_url" :src="authStore.user.fandom_avatar_url" class="avatar" />
+              <div v-else class="avatar-placeholder">{{ authStore.user?.username?.[0]?.toUpperCase() }}</div>
+              <span class="username">{{ authStore.user?.username }}</span>
+              <i class="fa fa-chevron-down caret"></i>
+              <div class="dropdown" v-if="menuOpen" @click.stop>
+                <a href="/profile">个人主页</a>
+                <div class="divider"></div>
+                <a @click.prevent="handleLogout" href="#">退出登录</a>
+              </div>
             </div>
-          </div>
-        </template>
-        <template v-else>
-          <a href="/login" class="btn-nav">登录</a>
-          <a href="/register" class="btn-nav-primary">注册</a>
-        </template>
+          </template>
+          <template v-else>
+            <a href="/login" class="btn-nav">登录</a>
+            <a href="/register" class="btn-nav-primary">注册</a>
+          </template>
+        </div>
+
+        <!-- 移动端菜单按钮 -->
+        <button class="menu-toggle" @click="mobileOpen = !mobileOpen" aria-label="菜单">
+          <span class="hamburger" :class="{ open: mobileOpen }">
+            <span></span><span></span><span></span>
+          </span>
+        </button>
       </div>
     </div>
+
+    <!-- 移动端下拉菜单 -->
+    <transition name="slide">
+      <div class="mobile-menu" v-if="mobileOpen" @click.self="mobileOpen = false">
+        <a href="/" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</a>
+        <a href="/search" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</a>
+        <a href="/rankings" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</a>
+        <a v-if="authStore.user?.role >= 3" href="/admin" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</a>
+        <div class="mobile-divider"></div>
+        <template v-if="authStore.isLoggedIn">
+          <a href="/profile" @click="mobileOpen = false">个人主页</a>
+          <a href="#" @click.prevent="handleLogout">退出登录</a>
+        </template>
+        <template v-else>
+          <a href="/login" @click="mobileOpen = false">登录</a>
+          <a href="/register" @click="mobileOpen = false">注册</a>
+        </template>
+      </div>
+    </transition>
   </nav>
 </template>
 
@@ -42,9 +79,10 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const menuOpen = ref(false)
+const mobileOpen = ref(false)
 
 function toggleMenu() { menuOpen.value = !menuOpen.value }
-function handleLogout() { authStore.logout(); menuOpen.value = false; router.push('/') }
+function handleLogout() { authStore.logout(); menuOpen.value = false; mobileOpen.value = false; router.push('/') }
 function closeMenu(e) { if (!e.target.closest('.user-menu')) menuOpen.value = false }
 
 onMounted(() => { authStore.fetchMe(); document.addEventListener('click', closeMenu) })
@@ -58,43 +96,103 @@ onUnmounted(() => { document.removeEventListener('click', closeMenu) })
   border-bottom: 1px solid var(--color-hairline);
 }
 .navbar-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 2rem;
-  height: 64px;
+  max-width: 1200px; margin: 0 auto; padding: 0 var(--space-8);
+  height: var(--size-nav);
   display: flex; align-items: center; justify-content: space-between;
 }
 .navbar-logo { display: flex; align-items: center; flex-shrink: 0; }
-.logo-img { height: 40px; width: auto; }
-.navbar-links { display: flex; align-items: center; gap: 24px; }
+.logo-img { height: 2.5rem; width: auto; }
+
+/* ── 桌面端导航链接 ── */
+.navbar-links { display: flex; align-items: center; gap: var(--space-6); }
 .navbar-links a {
-  color: var(--color-muted); font-size: 14px;
-  padding: 4px 0; transition: color 0.15s; font-weight: 500;
+  color: var(--color-muted); font-size: var(--text-sm);
+  padding: var(--space-1) 0; transition: color 0.15s; font-weight: 500;
 }
 .navbar-links a:hover, .navbar-links a.active { color: var(--color-primary); text-decoration: none; }
-.navbar-user { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-.btn-nav { color: var(--color-muted); padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500; transition: 0.15s; }
+
+/* ── 右侧区域 ── */
+.navbar-right { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.nav-search-btn {
+  color: var(--color-muted); font-size: var(--text-base);
+  width: var(--size-input); height: var(--size-input);
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm); transition: 0.15s;
+}
+.nav-search-btn:hover { color: var(--color-primary); background: var(--color-parchment); text-decoration: none; }
+
+.menu-toggle { display: none; background: none; border: none; cursor: pointer; padding: var(--space-2); }
+
+/* ── 用户菜单 ── */
+.navbar-user { display: flex; align-items: center; gap: var(--space-3); }
+.btn-nav {
+  color: var(--color-muted); padding: var(--space-1) var(--space-3);
+  border-radius: 6px; font-size: var(--text-sm); font-weight: 500; transition: 0.15s;
+}
 .btn-nav:hover { color: var(--color-primary); text-decoration: none; background: var(--color-parchment); }
 .btn-nav-primary {
   background: var(--color-primary); color: #fff;
-  padding: 6px 18px; border-radius: var(--radius-pill);
-  font-size: 14px; font-weight: 500; transition: opacity 0.15s;
+  padding: var(--space-1) var(--space-5); border-radius: var(--radius-pill);
+  font-size: var(--text-sm); font-weight: 500; transition: opacity 0.15s;
 }
 .btn-nav-primary:hover { opacity: 0.9; text-decoration: none; }
-.user-menu { display: flex; align-items: center; gap: 6px; cursor: pointer; position: relative; padding: 4px 8px; border-radius: 6px; }
+
+.user-menu { display: flex; align-items: center; gap: var(--space-1); cursor: pointer; position: relative; padding: var(--space-1) var(--space-2); border-radius: 6px; }
 .user-menu:hover { background: var(--color-parchment); }
-.username { color: var(--color-ink); font-size: 14px; }
-.avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+.username { color: var(--color-ink); font-size: var(--text-sm); }
+.caret { font-size: var(--text-xs); color: var(--color-muted); }
+.avatar { width: var(--size-avatar); height: var(--size-avatar); border-radius: 50%; object-fit: cover; }
 .avatar-placeholder {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: var(--size-avatar); height: var(--size-avatar); border-radius: 50%;
   background: var(--color-primary); color: #fff;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 600;
+  font-size: var(--text-xs); font-weight: 600;
 }
 .dropdown {
-  position: absolute; top: calc(100% + 8px); right: 0;
+  position: absolute; top: calc(100% + var(--space-2)); right: 0;
   background: var(--color-canvas); border: 1px solid var(--color-hairline);
   border-radius: 12px; min-width: 150px; overflow: hidden; z-index: 200;
 }
-.dropdown a { display: block; padding: 10px 16px; color: var(--color-ink); font-size: 15px; }
+.dropdown a { display: block; padding: var(--space-2) var(--space-4); color: var(--color-ink); font-size: var(--text-sm); }
 .dropdown a:hover { background: var(--color-parchment); text-decoration: none; }
 .divider { height: 1px; background: var(--color-hairline); }
+
+/* ── 移动端菜单 ── */
+.mobile-menu {
+  display: none;
+  position: fixed; top: var(--size-nav); left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3); z-index: 199;
+  padding: var(--space-4);
+}
+.mobile-menu a {
+  display: block; padding: var(--space-3) var(--space-4);
+  color: var(--color-ink); font-size: var(--text-base); font-weight: 500;
+  background: var(--color-canvas); border-bottom: 1px solid var(--color-hairline);
+}
+.mobile-menu a:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+.mobile-menu a:last-of-type { border-radius: 0 0 var(--radius-sm) var(--radius-sm); border-bottom: none; }
+.mobile-menu a:hover, .mobile-menu a.active { background: var(--color-parchment); text-decoration: none; color: var(--color-primary); }
+.mobile-divider { height: var(--space-2); }
+
+/* ── 汉堡图标 ── */
+.hamburger { display: flex; flex-direction: column; gap: 4px; width: 22px; }
+.hamburger span {
+  display: block; height: 2px; background: var(--color-ink);
+  border-radius: 2px; transition: all 0.25s;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+/* ── 过渡动画 ── */
+.slide-enter-active, .slide-leave-active { transition: opacity 0.2s; }
+.slide-enter-from, .slide-leave-to { opacity: 0; }
+
+/* ── 响应式 ── */
+@media (max-width: 768px) {
+  .navbar-links { display: none; }
+  .navbar-user .username { display: none; }
+  .menu-toggle { display: flex; align-items: center; justify-content: center; }
+  .mobile-menu { display: block; }
+}
 </style>

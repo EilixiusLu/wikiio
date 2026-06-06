@@ -17,9 +17,7 @@
       <div class="site-grid" v-else>
         <div class="site-card" v-for="site in sites" :key="site.site_id" @click="goToSite(site.site_id)">
           <div class="card-top">
-            <span class="platform-badge" :class="site.platform">
-              {{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}
-            </span>
+            <span class="platform-badge" :class="site.platform">{{ site.platform === 'fandom' ? 'Fandom' : 'Miraheze' }}</span>
             <span class="lang-badge">{{ site.language }}</span>
           </div>
           <h3>{{ site.name }}</h3>
@@ -38,18 +36,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { siteAPI } from '../api/index.js'
-
 const router = useRouter()
 const sites = ref([])
 const loading = ref(true)
 const searchQuery = ref('')
-
-function goSearch() {
-  if (searchQuery.value.trim()) router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`)
-  else router.push('/search')
-}
+function goSearch() { if (searchQuery.value.trim()) router.push(`/search?q=${encodeURIComponent(searchQuery.value)}`); else router.push('/search') }
 function goToSite(siteId) { router.push(`/wiki/${siteId}`) }
-
 onMounted(async () => {
   try { sites.value = await siteAPI.list() } catch (e) { console.error(e) }
   finally { loading.value = false }
@@ -58,73 +50,38 @@ onMounted(async () => {
 
 <style scoped>
 .home-page { min-height: 100vh; }
-
-.hero {
-  background: var(--color-parchment);
-  text-align: center;
-  padding: 80px 0;
-}
-.hero-title { font-size: 56px; font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; }
-.hero-sub { font-size: 21px; color: var(--color-muted); margin-top: 16px; }
-.hero-search {
-  display: flex; align-items: center;
-  max-width: 600px; margin: 32px auto 0;
-  background: var(--color-canvas);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-pill);
-  height: 44px;
-  overflow: hidden;
-}
-.search-icon { color: var(--color-muted); margin-left: 16px; font-size: 16px; }
-.hero-search input {
-  flex: 1; border: none; outline: none;
-  font-size: 17px; padding: 0 12px;
-  font-family: inherit; color: var(--color-ink);
-  background: transparent;
-}
+.hero { background: var(--color-parchment); text-align: center; padding: var(--space-20) 0; }
+.hero-title { font-size: var(--text-5xl); font-weight: 600; color: var(--color-ink); letter-spacing: -0.02em; }
+.hero-sub { font-size: var(--text-lg); color: var(--color-muted); margin-top: var(--space-4); }
+.hero-search { display: flex; align-items: center; max-width: 600px; margin: var(--space-8) auto 0; background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-pill); height: var(--size-input); overflow: hidden; }
+.search-icon { color: var(--color-muted); margin-left: var(--space-4); font-size: var(--text-base); flex-shrink: 0; }
+.hero-search input { flex: 1; border: none; outline: none; padding: 0 var(--space-3); font-size: var(--text-base); font-family: inherit; color: var(--color-ink); background: transparent; }
 .hero-search input::placeholder { color: var(--color-muted); }
-.hero-search button {
-  background: var(--color-primary); color: #fff;
-  border: none; padding: 0 28px; height: 100%;
-  font-size: 17px; cursor: pointer; font-family: inherit;
-  white-space: nowrap;
-}
+.hero-search button { background: var(--color-primary); color: #fff; border: none; padding: 0 var(--space-7, 1.75rem); height: 100%; font-size: var(--text-base); cursor: pointer; font-family: inherit; white-space: nowrap; flex-shrink: 0; }
 .hero-search button:hover { opacity: 0.9; }
-
-.content { max-width: 1100px; margin: 0 auto; padding: 60px 1.5rem; }
-.section-title { font-size: 24px; font-weight: 600; color: var(--color-ink); margin-bottom: 24px; letter-spacing: -0.02em; }
-.loading, .empty { text-align: center; padding: 40px 0; color: var(--color-muted); }
-
-.site-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
-.site-card {
-  background: var(--color-canvas);
-  border: 1px solid var(--color-hairline);
-  border-radius: var(--radius-card);
-  padding: 24px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-}
+.content { max-width: 1100px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
+.section-title { font-size: var(--text-xl); font-weight: 600; color: var(--color-ink); margin-bottom: var(--space-6); letter-spacing: -0.02em; }
+.loading, .empty { text-align: center; padding: var(--space-10) 0; color: var(--color-muted); }
+.site-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--space-6); }
+.site-card { background: var(--color-canvas); border: 1px solid var(--color-hairline); border-radius: var(--radius-card); padding: var(--space-6); cursor: pointer; transition: border-color 0.2s; }
 .site-card:hover { border-color: var(--color-primary); }
-.card-top { display: flex; gap: 8px; margin-bottom: 12px; }
-.platform-badge {
-  font-size: 12px; font-weight: 600;
-  padding: 2px 8px; border-radius: 4px;
-}
+.card-top { display: flex; gap: var(--space-2); margin-bottom: var(--space-3); }
+.platform-badge { font-size: var(--text-xs); font-weight: 600; padding: var(--space-1) var(--space-2); border-radius: 4px; }
 .platform-badge.fandom { background: #e8f0fc; color: var(--color-primary); }
 .platform-badge.miraheze { background: #e8f8f0; color: #27ae60; }
-.lang-badge { font-size: 12px; background: var(--color-parchment); color: var(--color-muted); padding: 2px 8px; border-radius: 4px; }
-.site-card h3 { font-size: 17px; font-weight: 600; color: var(--color-ink); margin-bottom: 8px; }
-.site-desc { font-size: 14px; color: var(--color-muted); line-height: 1.5; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lang-badge { font-size: var(--text-xs); background: var(--color-parchment); color: var(--color-muted); padding: var(--space-1) var(--space-2); border-radius: 4px; }
+.site-card h3 { font-size: var(--text-base); font-weight: 600; color: var(--color-ink); margin-bottom: var(--space-2); }
+.site-desc { font-size: var(--text-sm); color: var(--color-muted); line-height: 1.5; margin-bottom: var(--space-4); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .card-footer { display: flex; justify-content: space-between; align-items: center; }
-.site-id { font-size: 12px; color: var(--color-muted); font-family: monospace; }
-.arrow { font-size: 14px; color: var(--color-primary); }
+.site-id { font-size: var(--text-xs); color: var(--color-muted); font-family: monospace; }
+.arrow { font-size: var(--text-sm); color: var(--color-primary); }
 
 @media (max-width: 600px) {
-  .hero { padding: 48px 1rem; }
-  .hero-title { font-size: 36px; }
-  .hero-sub { font-size: 17px; }
+  .hero { padding: var(--space-12) var(--space-4); }
+  .hero-title { font-size: var(--text-3xl); }
+  .hero-sub { font-size: var(--text-base); }
   .hero-search { max-width: 100%; }
-  .hero-search input { font-size: 15px; padding: 0 12px; }
-  .hero-search button { font-size: 15px; padding: 0 18px; }
+  .hero-search input { font-size: var(--text-sm); padding: 0 var(--space-3); }
+  .hero-search button { font-size: var(--text-sm); padding: 0 var(--space-4); }
 }
 </style>
