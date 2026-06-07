@@ -35,75 +35,83 @@
             </div>
 
             <div class="rating-box">
-              <div class="rating-left">
-                <div class="rating-score">{{ page.rating_avg.toFixed(1) }}</div>
-                <div class="rating-stars-display">
-                  <i
-                    v-for="i in 5" :key="i"
-                    class="fa fa-star star"
-                    :class="{ filled: i <= Math.round(page.rating_avg) }"
-                  ></i>
-                </div>
-                <div class="rating-count">{{ page.rating_count }} 人评分</div>
-              </div>
-
-              <div class="rating-right">
-                <div v-if="!authStore.isLoggedIn" class="rating-hint">
-                  <a href="/login">登录</a>后才能评分
-                </div>
-                <div
-                  v-else-if="!authStore.user?.is_fandom_verified"
-                  class="rating-hint"
-                >请先<a href="/profile">绑定Fandom账户</a>才能评分</div>
-                <div v-else>
-                  <div class="my-rating-label">
-                    {{ myScore ? '我的评分' : '点击评分' }}
-                  </div>
-                  <div class="stars-input">
+              <h2>Wikiio评分</h2>
+              <div class="rating-body">
+                <div class="rating-left">
+                  <div class="rating-score">{{ page.rating_avg.toFixed(1) }}</div>
+                  <div class="rating-stars-display">
                     <i
                       v-for="i in 5" :key="i"
-                      class="fa fa-star star-input"
-                      :class="{ filled: i <= (hoverScore || myScore) }"
-                      @mouseenter="hoverScore = i"
-                      @mouseleave="hoverScore = 0"
-                      @click="submitRating(i)"
+                      class="fa fa-star star"
+                      :class="{ filled: i <= Math.round(page.rating_avg) }"
                     ></i>
                   </div>
-                  <div class="rating-actions">
-                    <span class="rating-score-label" v-if="myScore">{{ myScore }} 星</span>
-                    <button v-if="myScore" class="btn-remove-rating" @click="removeRating">
-                      撤销
-                    </button>
+                  <div class="rating-count">{{ page.rating_count }} 人评分</div>
+                </div>
+
+                <div class="rating-right">
+                  <div v-if="!authStore.isLoggedIn" class="rating-hint">
+                    <a href="/login">登录</a>后才能评分
                   </div>
-                  <div class="rating-msg success" v-if="ratingMsg">{{ ratingMsg }}</div>
-                  <div class="rating-msg error" v-if="ratingError">{{ ratingError }}</div>
+                  <div
+                    v-else-if="!authStore.user?.is_fandom_verified"
+                    class="rating-hint"
+                  >请先<a href="/profile">绑定Fandom账户</a>才能评分</div>
+                  <div v-else>
+                    <div class="my-rating-label">
+                      {{ myScore ? '我的评分' : '点击评分' }}
+                    </div>
+                    <div class="stars-input">
+                      <i
+                        v-for="i in 5" :key="i"
+                        class="fa fa-star star-input"
+                        :class="{ filled: i <= (hoverScore || myScore) }"
+                        @mouseenter="hoverScore = i"
+                        @mouseleave="hoverScore = 0"
+                        @click="submitRating(i)"
+                      ></i>
+                    </div>
+                    <div class="rating-actions">
+                      <span class="rating-score-label" v-if="myScore">{{ myScore }} 星</span>
+                      <button v-if="myScore" class="btn-remove-rating" @click="removeRating">
+                        撤销
+                      </button>
+                    </div>
+                    <div class="rating-msg success" v-if="ratingMsg">{{ ratingMsg }}</div>
+                    <div class="rating-msg error" v-if="ratingError">{{ ratingError }}</div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <div class="card site-rating-card" v-if="siteRating">
+            <div class="site-rating-card" v-if="siteRating">
               <h2>原站评分</h2>
-              <div class="site-rating-box">
+              <div class="site-rating-body">
                 <div class="site-rating-left">
                   <div class="site-rating-score">
-                    {{ siteRating.avg_rating.toFixed(1) }}
+                    {{ siteAvgDisplay }}
                   </div>
-                  <div class="site-rating-label">/ 10</div>
+                  <div class="rating-stars-display">
+                    <i
+                      v-for="i in 5" :key="i"
+                      class="fa fa-star star"
+                      :class="{ filled: i <= Math.round(siteRating.avg_rating / 2) }"
+                    ></i>
+                  </div>
+                  <div class="rating-count">{{ siteRating.total_votes }} 票</div>
                 </div>
-                <div class="site-rating-right">
-                  <div class="site-rating-bar-wrap">
-                    <div
-                      class="site-rating-bar"
-                      :style="{ width: (siteRating.avg_rating / 10 * 100) + '%' }"
-                    ></div>
-                  </div>
-                  <div class="site-rating-meta">
-                    <span>{{ siteRating.total_votes }} 票</span>
-                    <span>总分 {{ siteRating.total_points }}</span>
-                  </div>
+                <div class="site-rating-right" v-if="siteRating.distribution">
+                  <span v-for="(count, star) in siteRating.distribution" :key="star" class="dist-item">
+                    {{ star }}星: {{ count }}
+                  </span>
+                </div>
+                <div class="site-rating-right" v-else>
+                  <span class="dist-item">总分 {{ siteRating.total_points }}</span>
                 </div>
               </div>
-              <div class="site-rating-note">数据来源：原站 RatePage 扩展</div>
+              <div class="site-rating-note" v-if="siteRating.scale === 5">
+                数据来源：原站 RatePage 扩展
+              </div>
             </div>
           </div>
 
@@ -221,6 +229,16 @@ async function removeRating() {
 }
 
 const siteRating = ref(null)
+
+const siteAvgDisplay = computed(() => {
+  if (!siteRating.value) return '0.0'
+  if (siteRating.value.scale === 5) {
+    // 把后端换算过的 10 分制转回 5 分制显示
+    return (siteRating.value.avg_rating / 2).toFixed(1)
+  }
+  return siteRating.value.avg_rating.toFixed(1)
+})
+
 async function loadSiteRating() {
   try {
     const r = await pageAPI.siteRating(route.params.id)
@@ -280,6 +298,14 @@ async function loadSiteRating() {
 }
 
 .rating-box {
+  margin-bottom: var(--space-6);
+}
+.rating-box h2 {
+  font-size: var(--text-lg); font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.02em;
+  margin-bottom: var(--space-5);
+}
+.rating-body {
   display: flex; align-items: center; gap: var(--space-8);
   padding: var(--space-6); background: var(--color-parchment);
   border-radius: 12px; flex-wrap: wrap;
@@ -327,30 +353,39 @@ async function loadSiteRating() {
 .rating-msg.success { color: var(--color-success); }
 .rating-msg.error { color: var(--color-danger); }
 
-.site-rating-card { margin-top: 0; background: var(--color-parchment); border: none; }
-.site-rating-box { display: flex; align-items: center; gap: var(--space-6); }
+.site-rating-card {
+  background: var(--color-canvas);
+  border-radius: var(--radius-card);
+}
+.site-rating-card h2 {
+  font-size: var(--text-lg); font-weight: 600;
+  color: var(--color-ink); letter-spacing: -0.02em;
+  margin-bottom: var(--space-5);
+}
+.site-rating-body {
+  display: flex; align-items: center; gap: var(--space-8);
+  padding: var(--space-6); background: var(--color-parchment);
+  border-radius: 12px; flex-wrap: wrap;
+}
 .site-rating-left {
-  display: flex; align-items: baseline; gap: var(--space-1);
+  display: flex; flex-direction: column;
+  align-items: center; gap: var(--space-1);
   flex-shrink: 0;
 }
 .site-rating-score {
   font-size: var(--text-4xl); font-weight: 600;
   color: var(--color-primary); line-height: 1;
 }
-.site-rating-label { font-size: var(--text-base); color: var(--color-muted); }
-.site-rating-right { flex: 1; }
-.site-rating-bar-wrap {
-  height: 8px; background: var(--color-hairline);
-  border-radius: 4px; overflow: hidden; margin-bottom: var(--space-2);
+.site-rating-right {
+  display: flex; gap: var(--space-2);
+  flex-wrap: wrap; align-items: center;
 }
-.site-rating-bar {
-  height: 100%; background: var(--color-primary);
-  border-radius: 4px;
-  transition: width var(--duration-slow) var(--ease-apple);
-}
-.site-rating-meta {
-  display: flex; gap: var(--space-4);
-  color: var(--color-muted); font-size: var(--text-sm);
+.dist-item {
+  font-size: var(--text-xs);
+  background: var(--color-canvas);
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
 }
 .site-rating-note {
   color: var(--color-muted); font-size: var(--text-xs);

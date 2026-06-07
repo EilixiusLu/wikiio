@@ -28,6 +28,10 @@ class Page(Base):
     rating_count = Column(Integer, default=0)       # 评分人数
     rating_avg = Column(Float, default=0.0)         # 平均评分
 
+    # 原站 RatePage 评分（已归一化为10分制）
+    site_rating_avg = Column(Float, nullable=True)      # 原站平均评分
+    site_rating_count = Column(Integer, default=0)      # 原站评分人数
+
     # 页面状态
     is_redirect = Column(Boolean, default=False)    # 是否是重定向页面
     namespace = Column(Integer, default=0)          # 命名空间

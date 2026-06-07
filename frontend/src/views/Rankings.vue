@@ -22,6 +22,13 @@
       <button :class="{ active: tab === 'author_rating' }" @click="switchTab('author_rating')">
         <i class="fa fa-trophy"></i> 作者评分榜
       </button>
+      <button
+        v-if="currentSite?.has_ratepage"
+        :class="{ active: tab === 'site_rating' }"
+        @click="switchTab('site_rating')"
+      >
+        <i class="fa fa-globe"></i> 原站评分榜
+      </button>
     </div>
 
     <div class="content">
@@ -65,6 +72,44 @@
         </TransitionGroup>
       </div>
 
+      <div v-else-if="tab === 'site_rating'">
+        <div v-if="siteRatingList.length === 0" class="empty">暂无原站评分数据</div>
+        <TransitionGroup name="list" tag="div" class="rank-list" v-else>
+          <div
+            class="rank-item"
+            v-for="(page, index) in siteRatingList"
+            :key="page.id"
+            @click="goToPage(page.id)"
+          >
+            <span class="rank-num">{{ index + 1 }}</span>
+            <div class="rank-main">
+              <div class="rank-title">{{ page.title }}</div>
+              <div class="rank-meta">
+                <span>{{ page.author || '未知' }}</span>
+                <span>{{ page.word_count }} 字</span>
+                <span>{{ formatDate(page.last_edited_at) }}</span>
+              </div>
+              <div class="rank-cats">
+                <span class="cat-tag" v-for="cat in page.categories.slice(0,3)" :key="cat">
+                  {{ cat }}
+                </span>
+              </div>
+            </div>
+            <div class="rank-score">
+              <div class="score-num">{{ (page.site_rating_avg / 2).toFixed(1) }}</div>
+              <div class="score-stars">
+                <i
+                  v-for="i in 5" :key="i"
+                  class="fa fa-star star"
+                  :class="{ filled: i <= Math.round(page.site_rating_avg / 2) }"
+                ></i>
+              </div>
+              <div class="score-count">{{ page.site_rating_count }} 票</div>
+            </div>
+          </div>
+        </TransitionGroup>
+      </div>
+
       <TransitionGroup v-else name="list" tag="div" class="rank-list">
         <div
           class="rank-item"
@@ -102,7 +147,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { pageAPI, siteAPI } from '../api/index.js'
 
@@ -112,7 +157,10 @@ const selectedSite = ref('')
 const sites = ref([])
 const ratingList = ref([])
 const authorList = ref([])
+const siteRatingList = ref([])
 const loading = ref(false)
+
+const currentSite = computed(() => sites.value.find(s => s.site_id === selectedSite.value))
 
 function formatDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('zh-CN') }
 function goToPage(id) { router.push(`/page/${id}`) }
@@ -125,8 +173,10 @@ async function loadData() {
       ratingList.value = await pageAPI.rankingByRating(selectedSite.value)
     } else if (tab.value === 'author_pages') {
       authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'page_count')
-    } else {
+    } else if (tab.value === 'author_rating') {
       authorList.value = await pageAPI.rankingByAuthor(selectedSite.value, 'rating')
+    } else if (tab.value === 'site_rating') {
+      siteRatingList.value = await pageAPI.rankingBySiteRating(selectedSite.value)
     }
   } catch (e) { console.error(e) }
   finally { loading.value = false }

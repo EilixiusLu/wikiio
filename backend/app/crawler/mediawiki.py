@@ -158,7 +158,12 @@ class MediaWikiClient:
         return data.get("query", {}).get("recentchanges", [])
     
     async def get_page_rating(self, page_id: int) -> Optional[dict]:
-        """通过RatePage扩展API获取页面原站评分"""
+        """通过RatePage扩展API获取页面原站评分
+
+        兼容两种格式:
+        - Fandom: 直接返回 total_votes / total_points / avg_rating（10分制）
+        - Miraheze/MediaWiki RatePage: 返回 pageRating: {"1": count, "2": count, ...}（5星制）
+        """
         data = await self._request({
             "action": "query",
             "prop": "pagerating",
@@ -176,8 +181,28 @@ class MediaWikiClient:
         if not rating_data:
             return None
 
+        # --- Miraheze / MediaWiki RatePage 格式: pageRating 分布 ---
+        page_rating = rating_data.get("pageRating")
+        if page_rating and isinstance(page_rating, dict):
+            # 键 "1"~"5" 映射到对应星级的投票人数
+            distribution = {str(k): int(v) for k, v in page_rating.items() if str(k).isdigit()}
+            total_votes = sum(distribution.values())
+            total_points = sum(int(k) * v for k, v in distribution.items())
+            avg_rating_5 = round(total_points / total_votes, 2) if total_votes > 0 else 0.0
+
+            return {
+                "total_votes": total_votes,
+                "total_points": total_points,
+                "avg_rating": round(avg_rating_5 * 2, 2),  # 统一换算为 10 分制
+                "scale": 5,
+                "distribution": distribution,
+            }
+
+        # --- Fandom 格式 ---
         return {
             "total_votes": rating_data.get("total_votes", 0),
             "total_points": rating_data.get("total_points", 0),
             "avg_rating": rating_data.get("avg_rating", 0),
+            "scale": 10,
+            "distribution": None,
         }

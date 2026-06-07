@@ -150,6 +150,17 @@ async def crawl_single_page(
 
     await db.commit()
 
+    # --- 原站 RatePage 评分 ---
+    if site.has_ratepage:
+        try:
+            rating = await client.get_page_rating(page_id)
+            if rating:
+                db_page.site_rating_avg = rating["avg_rating"]
+                db_page.site_rating_count = rating["total_votes"]
+                await db.commit()
+        except Exception as e:
+            logger.warning(f"获取原站评分失败 {title}: {e}")
+
     # --- 缓存失效 ---
     try:
         await cache_delete(f"page:{db_page.id}")

@@ -432,7 +432,7 @@ async function deleteSite(siteId) {
 
 .form-actions { display: flex; align-items: center; gap: var(--space-4); }
 .btn-submit {
-  padding: var(--space-2) var(--space-7);
+  padding: var(--space-2) var(--space-3);
   background: var(--color-primary); color: #fff;
   border: none; border-radius: var(--radius-pill);
   cursor: pointer; font-size: var(--text-base); font-family: inherit;

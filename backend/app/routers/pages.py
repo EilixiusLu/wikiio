@@ -212,6 +212,39 @@ async def ranking_by_author(
         }
         for r in rows
     ]
+
+@router.get("/rankings/by-site-rating")
+@cached(ttl=300, key_prefix="pages:rankings:by-site-rating:{site_id}:{skip}:{limit}")
+async def ranking_by_site_rating(
+    site_id: str,
+    skip: int = 0,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+):
+    """按原站 RatePage 评分排名（至少有一票）"""
+    result = await db.execute(
+        select(Page)
+        .where(Page.site_id == site_id, Page.site_rating_count > 0)
+        .order_by(Page.site_rating_avg.desc(), Page.site_rating_count.desc())
+        .offset(skip).limit(limit)
+    )
+    pages = result.scalars().all()
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "author": p.author,
+            "word_count": p.word_count,
+            "site_rating_avg": p.site_rating_avg,
+            "site_rating_count": p.site_rating_count,
+            "rating_avg": p.rating_avg,
+            "rating_count": p.rating_count,
+            "categories": json.loads(p.categories) if p.categories else [],
+            "last_edited_at": p.last_edited_at,
+        }
+        for p in pages
+    ]
+
 @router.get("/author/{author_name}")
 @cached(ttl=120, key_prefix="pages:author:{author_name}:list:{site_id}:{skip}:{limit}")
 async def get_author_pages(
@@ -408,4 +441,6 @@ async def get_site_rating(
         "total_votes": rating["total_votes"],
         "total_points": rating["total_points"],
         "avg_rating": rating["avg_rating"],
+        "scale": rating.get("scale", 10),
+        "distribution": rating.get("distribution"),
     }

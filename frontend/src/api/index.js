@@ -60,6 +60,8 @@ export const pageAPI = {
     api.get('/pages/rankings/by-rating', { params: { site_id: siteId, skip, limit } }),
   rankingByAuthor: (siteId, orderBy = 'page_count', skip = 0, limit = 50) =>
     api.get('/pages/rankings/by-author', { params: { site_id: siteId, order_by: orderBy, skip, limit } }),
+  rankingBySiteRating: (siteId, skip = 0, limit = 50) =>
+    api.get('/pages/rankings/by-site-rating', { params: { site_id: siteId, skip, limit } }),
   authorPages: (author, siteId = null, skip = 0, limit = 20) =>
     api.get(`/pages/author/${encodeURIComponent(author)}`, {
       params: { site_id: siteId || undefined, skip, limit }

@@ -3,7 +3,7 @@
     <div class="footer-inner">
       <div class="footer-grid">
         <div class="footer-col">
-          <h4>产品功能</h4>
+          <h4>站点功能</h4>
           <a href="/">维基统计</a>
           <a href="/search">页面搜索</a>
           <a href="/rankings">作者排名</a>

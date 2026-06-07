@@ -1,16 +1,18 @@
 <template>
   <nav class="navbar">
     <div class="navbar-inner">
-      <a href="/" class="navbar-logo">
-        <img src="/wikiio-logo.svg" alt="Wikiio" class="logo-img" />
-      </a>
+      <div class="navbar-left">
+        <a href="/" class="navbar-logo">
+          <img src="/wikiio-logo.svg" alt="Wikiio" class="logo-img" />
+        </a>
 
-      <!-- 桌面端导航链接 -->
-      <div class="navbar-links">
-        <a href="/" :class="{ active: route.path === '/' }">首页</a>
-        <a href="/search" :class="{ active: route.path === '/search' }">搜索</a>
-        <a href="/rankings" :class="{ active: route.path === '/rankings' }">排名</a>
-        <a v-if="authStore.user?.role >= 3" href="/admin" :class="{ active: route.path === '/admin' }">管理</a>
+        <!-- 桌面端导航链接 -->
+        <div class="navbar-links">
+          <a href="/" :class="{ active: route.path === '/' }">首页</a>
+          <a href="/search" :class="{ active: route.path === '/search' }">搜索</a>
+          <a href="/rankings" :class="{ active: route.path === '/rankings' }">排名</a>
+          <a v-if="authStore.user?.role >= 3" href="/admin" :class="{ active: route.path === '/admin' }">管理</a>
+        </div>
       </div>
 
       <div class="navbar-right">
@@ -116,6 +118,7 @@ onUnmounted(() => {
   height: var(--size-nav);
   display: flex; align-items: center; justify-content: space-between;
 }
+.navbar-left { display: flex; align-items: center; gap: var(--space-8); }
 .navbar-logo { display: flex; align-items: center; flex-shrink: 0; }
 .logo-img { height: 2.5rem; width: auto; }
 
