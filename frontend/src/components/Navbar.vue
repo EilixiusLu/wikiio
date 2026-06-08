@@ -58,18 +58,18 @@
 
     <Transition name="slide">
       <div class="mobile-menu" v-if="mobileOpen" @click.self="mobileOpen = false">
-        <a href="/" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</a>
-        <a href="/search" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</a>
-        <a href="/rankings" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</a>
-        <a v-if="authStore.user?.role >= 3" href="/admin" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</a>
+        <a href="/" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</a>
+        <a href="/search" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</a>
+        <a href="/rankings" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</a>
+        <a v-if="authStore.user?.role >= 3" href="/admin" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</a>
         <div class="mobile-divider"></div>
         <template v-if="authStore.isLoggedIn">
-          <a href="/profile" @click="mobileOpen = false">个人主页</a>
-          <a href="#" @click.prevent="handleLogout">退出登录</a>
+          <a href="/profile" class="mobile-nav-sub" @click="mobileOpen = false">个人主页</a>
+          <a href="#" class="mobile-nav-sub" @click.prevent="handleLogout">退出登录</a>
         </template>
         <template v-else>
-          <a href="/login" @click="mobileOpen = false">登录</a>
-          <a href="/register" @click="mobileOpen = false">注册</a>
+          <a href="/login" class="mobile-nav-sub" @click="mobileOpen = false">登录</a>
+          <a href="/register" class="mobile-nav-sub" @click="mobileOpen = false">注册</a>
         </template>
       </div>
     </Transition>
@@ -222,22 +222,49 @@ onUnmounted(() => {
 /* ── 移动端菜单 ── */
 .mobile-menu {
   display: none;
-  position: fixed; top: var(--size-nav); left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.3); z-index: 199;
-  padding: var(--space-4);
+  position: fixed;
+  top: var(--size-nav);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--color-canvas);
+  z-index: 199;
+  overflow-y: auto;
+  padding: var(--space-10) var(--space-8);
 }
-.mobile-menu a {
-  display: block; padding: var(--space-3) var(--space-4);
-  color: var(--color-ink); font-size: var(--text-base); font-weight: 500;
-  background: var(--color-canvas); border-bottom: 1px solid var(--color-hairline);
-  transition: background-color var(--duration-fast) var(--ease-smooth),
-              color var(--duration-fast) var(--ease-smooth);
+
+/* 主导航链接: 大字体冲击 */
+.mobile-nav-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  color: var(--color-ink);
+  line-height: 1.5;
+  margin-bottom: var(--space-6);
+  transition: opacity var(--duration-fast) var(--ease-apple);
 }
-.mobile-menu a:first-child { border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
-.mobile-menu a:last-of-type { border-radius: 0 0 var(--radius-sm) var(--radius-sm); border-bottom: none; }
-.mobile-menu a:hover,
-.mobile-menu a.active { background: var(--color-parchment); text-decoration: none; color: var(--color-primary); }
-.mobile-divider { height: var(--space-2); }
+.mobile-nav-main:active { opacity: 0.6; }
+
+/* 次级导航链接: 降级处理 */
+.mobile-nav-sub {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--color-muted);
+  line-height: 1.5;
+  margin-bottom: var(--space-5);
+  transition: opacity var(--duration-fast) var(--ease-apple);
+}
+.mobile-nav-sub:active { opacity: 0.6; }
+
+/* 分割线: 视觉缓冲留白, 不画线 */
+.mobile-divider {
+  height: var(--space-10);
+}
 
 /* ── 汉堡图标 ── */
 .hamburger { display: flex; flex-direction: column; gap: 4px; width: 22px; }
@@ -252,14 +279,17 @@ onUnmounted(() => {
 .hamburger.open span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 
 /* ── 移动端过渡 ── */
-.slide-enter-active {
-  transition: opacity var(--duration-base) var(--ease-spring);
-}
+.slide-enter-active,
 .slide-leave-active {
-  transition: opacity var(--duration-fast) var(--ease-smooth);
+  transition:
+    opacity var(--duration-base) var(--ease-apple),
+    transform var(--duration-base) var(--ease-apple);
 }
 .slide-enter-from,
-.slide-leave-to { opacity: 0; }
+.slide-leave-to {
+  opacity: 0;
+  transform: translateY(calc(var(--space-3) * -1));
+}
 
 @media (max-width: 768px) {
   .navbar-links { display: none; }
