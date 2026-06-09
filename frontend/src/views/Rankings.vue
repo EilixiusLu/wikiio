@@ -248,7 +248,7 @@ onMounted(async () => {
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.rank-item:hover { border-color: var(--color-primary); background-color: #e8f0fc; }
+.rank-item:hover { border-color: var(--color-primary); background-color: var(--color-highlight); }
 
 .rank-num {
   width: 36px; height: 36px; border-radius: 50%;

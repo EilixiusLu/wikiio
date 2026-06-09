@@ -20,6 +20,10 @@
           <i class="fa fa-search"></i>
         </a>
 
+        <button class="nav-search-btn theme-toggle" @click="toggleTheme" :title="themeLabel">
+          <i class="fa" :class="resolvedTheme === 'dark' ? 'fa-sun-o' : 'fa-moon-o'"></i>
+        </button>
+
         <div class="navbar-user">
           <template v-if="authStore.isLoggedIn">
             <div class="user-menu" @click="toggleMenu">
@@ -77,15 +81,27 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
+import { useTheme } from '../composables/useTheme.js'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const menuOpen = ref(false)
 const mobileOpen = ref(false)
+const { theme, toggle: toggleTheme } = useTheme()
+
+const resolvedTheme = computed(() => {
+  if (theme.value === 'dark') return 'dark'
+  if (theme.value === 'light') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+})
+
+const themeLabel = computed(() =>
+  resolvedTheme.value === 'dark' ? '切换为浅色模式' : '切换为深色模式'
+)
 
 function toggleMenu() { menuOpen.value = !menuOpen.value }
 function handleLogout() {
@@ -158,6 +174,13 @@ onUnmounted(() => {
 }
 .nav-search-btn:hover { color: var(--color-primary); background: var(--color-parchment); text-decoration: none; }
 .nav-search-btn:active { transform: scale(0.92); }
+
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
 
 .menu-toggle {
   display: none; background: none; border: none;

@@ -194,11 +194,11 @@ onMounted(async () => {
 }
 .author-badges { display: flex; gap: var(--space-2); flex-wrap: wrap; }
 .badge {
-  background: #e8f0fc; color: var(--color-primary);
+  background: var(--color-highlight); color: var(--color-primary);
   padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-pill); font-size: var(--text-sm); font-weight: 500;
 }
-.badge-star { background: #fff8e6; color: #b8860b; }
+.badge-star { background: var(--color-badge-warm); color: var(--color-badge-warm-text); }
 .badge i { margin-right: 2px; }
 
 /* ── 站点卡片 ── */
@@ -212,8 +212,8 @@ onMounted(async () => {
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.site-card:hover { background-color: #e8f0fc; }
-.site-card.active { border-color: var(--color-primary); background-color: #e8f0fc; }
+.site-card:hover { background-color: var(--color-highlight); }
+.site-card.active { border-color: var(--color-primary); background-color: var(--color-highlight); }
 .site-name { font-weight: 600; color: var(--color-ink); margin-bottom: var(--space-3); font-size: var(--text-sm); }
 .site-nums { display: flex; gap: var(--space-4); }
 .site-num { text-align: center; }
@@ -256,7 +256,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.page-item:hover { background-color: #e8f0fc; }
+.page-item:hover { background-color: var(--color-highlight); }
 .page-main { flex: 1; min-width: 0; }
 .page-title {
   font-size: var(--text-base); font-weight: 500; color: var(--color-ink);
@@ -268,20 +268,20 @@ onMounted(async () => {
   color: var(--color-muted); font-size: var(--text-sm); align-items: center;
 }
 .site-badge {
-  background: #e8f0fc; color: var(--color-primary);
+  background: var(--color-highlight); color: var(--color-primary);
   padding: 1px var(--space-2); border-radius: 4px; font-size: var(--text-xs);
 }
 .page-cats { display: flex; gap: var(--space-1); }
 .cat-tag {
   font-size: var(--text-xs);
-  background: #d4e4fb; color: var(--color-primary);
+  background: var(--color-tag); color: var(--color-primary);
   padding: 1px var(--space-2); border-radius: var(--radius-pill);
 }
 .page-rating { flex-shrink: 0; text-align: center; min-width: 64px; }
 .page-rating.no-rating .rating-num { color: var(--color-hairline); }
 .rating-num { font-size: var(--text-xl); font-weight: 600; color: var(--color-primary); line-height: 1; }
 .rating-stars .star { font-size: var(--text-xs); color: var(--color-hairline); }
-.rating-stars .star.filled { color: #f5a623; }
+.rating-stars .star.filled { color: var(--color-star); }
 .rating-count { font-size: var(--text-xs); color: var(--color-muted); margin-top: var(--space-1); }
 
 .pagination {

@@ -168,8 +168,8 @@ onMounted(async () => {
   padding: var(--space-1) var(--space-3);
   border-radius: 4px; margin-bottom: var(--space-3);
 }
-.platform-badge.fandom { background: #e8f0fc; color: var(--color-primary); }
-.platform-badge.miraheze { background: #e8f8f0; color: #27ae60; }
+.platform-badge.fandom { background: var(--color-highlight); color: var(--color-primary); }
+.platform-badge.miraheze { background: var(--color-miraheze-badge); color: var(--color-miraheze-text); }
 .site-header h1 {
   font-size: var(--text-2xl); font-weight: 600;
   color: var(--color-ink); letter-spacing: -0.02em;
@@ -194,7 +194,7 @@ onMounted(async () => {
   transition: background-color var(--duration-base) var(--ease-smooth),
               border-color var(--duration-base) var(--ease-smooth);
 }
-.stat-card:hover { background-color: #e8f0fc; border-color: var(--color-primary); }
+.stat-card:hover { background-color: var(--color-highlight); border-color: var(--color-primary); }
 .stat-number {
   font-size: var(--text-3xl); font-weight: 600;
   color: var(--color-primary);
@@ -233,7 +233,7 @@ onMounted(async () => {
   margin: 0 calc(-1 * var(--space-4));
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.page-item:hover { background-color: #e8f0fc; }
+.page-item:hover { background-color: var(--color-highlight); }
 .page-main { flex: 1; min-width: 0; }
 .page-title {
   font-size: var(--text-base); font-weight: 500;
@@ -248,7 +248,7 @@ onMounted(async () => {
 .page-cats { display: flex; gap: var(--space-1); margin-top: var(--space-1); }
 .cat-tag {
   font-size: var(--text-xs);
-  background: #d4e4fb;
+  background: var(--color-tag);
   color: var(--color-primary);
   padding: 1px var(--space-2); border-radius: var(--radius-pill);
 }
@@ -266,7 +266,7 @@ onMounted(async () => {
   border-radius: var(--radius-sm);
   transition: background-color var(--duration-fast) var(--ease-smooth);
 }
-.load-more:hover { background-color: #e8f0fc; }
+.load-more:hover { background-color: var(--color-highlight); }
 
 /* ── 创作者排名 ── */
 .author-item {

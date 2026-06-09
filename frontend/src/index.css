@@ -11,6 +11,16 @@
   --color-success: #27ae60;
   --color-danger: #e74c3c;
 
+  /* ── 语义辅助色 ── */
+  --color-highlight: #e8f0fc;
+  --color-tag: #d4e4fb;
+  --color-star: #f5a623;
+  --color-badge-warm: #fff8e6;
+  --color-badge-warm-text: #b8860b;
+  --color-miraheze-badge: #e8f8f0;
+  --color-miraheze-text: #27ae60;
+  --color-cat-hover: #e8ecff;
+
   /* ── 圆角 ── */
   --radius-card: 18px;
   --radius-pill: 9999px;
@@ -55,6 +65,54 @@
   --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);          /* 苹果标志性柔和缓出 */
   --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.05); /* 微弱回弹，仅用于菜单/模态框进场 */
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);            /* 标准平滑缓动 */
+}
+
+/* ── 暗黑模式变量 ── */
+:root[data-theme="dark"] {
+  /* 主交互色提亮，保证在黑底上的对比度与清晰度 */
+  --color-primary: #3c92e6;
+
+  /* 文本颜色反转 */
+  --color-ink: #f5f5f7;
+  --color-muted: #a1a1a6;
+
+  /* 表面与背景级联 */
+  --color-canvas: #1c1c1e;
+  --color-parchment: #000000;
+
+  /* 极细边框变暗 */
+  --color-hairline: rgba(255, 255, 255, 0.15);
+
+  /* 状态色提亮 */
+  --color-success: #32d74b;
+  --color-danger: #ff453a;
+
+  /* 语义辅助色：暗色下调暗，仅保留极细微的主色暗示 */
+  --color-highlight: rgba(60, 146, 230, 0.12);
+  --color-tag: rgba(60, 146, 230, 0.15);
+  --color-star: #f5c542;
+  --color-badge-warm: rgba(245, 197, 66, 0.15);
+  --color-badge-warm-text: #f5c542;
+  --color-miraheze-badge: rgba(50, 215, 75, 0.12);
+  --color-miraheze-text: #32d74b;
+  --color-cat-hover: rgba(60, 146, 230, 0.12);
+}
+
+/* ── 全局颜色平滑过渡 ── */
+body,
+.navbar,
+.card,
+.dropdown,
+.mobile-menu {
+  transition:
+    background-color var(--duration-slow) var(--ease-smooth),
+    color var(--duration-slow) var(--ease-smooth),
+    border-color var(--duration-slow) var(--ease-smooth);
+}
+
+/* ── 暗黑模式 Logo 反色 ── */
+:root[data-theme="dark"] .logo-img {
+  filter: invert(1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

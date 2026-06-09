@@ -295,7 +295,7 @@ onMounted(async () => {
   cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.result-item:hover { background-color: #e8f0fc; }
+.result-item:hover { background-color: var(--color-highlight); }
 .result-title {
   font-size: var(--text-base); font-weight: 500;
   color: var(--color-ink); margin-bottom: var(--space-2);
@@ -316,7 +316,7 @@ onMounted(async () => {
 }
 .match-badge {
   display: inline-block; font-size: var(--text-xs);
-  background: #e8f0fc; color: var(--color-primary);
+  background: var(--color-highlight); color: var(--color-primary);
   padding: 1px var(--space-1); border-radius: 4px;
   margin-left: var(--space-2); vertical-align: middle;
 }
@@ -374,7 +374,7 @@ onMounted(async () => {
   text-align: center; cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
-.cat-card:hover { background-color: #e8ecff; }
+.cat-card:hover { background-color: var(--color-cat-hover); }
 .cat-name {
   font-weight: 500; color: var(--color-ink);
   font-size: var(--text-sm); margin-bottom: var(--space-1);
