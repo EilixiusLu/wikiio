@@ -36,109 +36,111 @@
         </div>
       </div>
 
-      <div class="card">
-        <h2><i class="fa fa-globe"></i> Fandom 账户绑定</h2>
-        <div v-if="authStore.user.is_fandom_verified" class="bound-state">
-          <div class="bound-info">
-            <img
-              v-if="authStore.user.fandom_avatar_url"
-              :src="authStore.user.fandom_avatar_url"
-              class="fandom-avatar"
-            />
-            <div>
-              <p class="bound-name">{{ authStore.user.fandom_username }}</p>
-              <p class="hint">已成功绑定</p>
-            </div>
-          </div>
-          <button class="btn-danger" @click="handleUnbind">解除绑定</button>
-        </div>
-        <div v-else-if="!verifyCode">
-          <p class="hint">绑定后可评分，头像同步为 Fandom 头像</p>
-          <div class="form-row">
-            <input v-model="fandomUsername" placeholder="输入你的 Fandom 用户名" />
-            <button
-              class="btn-primary"
-              @click="startBind"
-              :disabled="bindLoading"
-            >{{ bindLoading ? '处理中...' : '开始绑定' }}</button>
-          </div>
-          <div class="error" v-if="bindError">{{ bindError }}</div>
-        </div>
-        <div v-else class="verify-step">
-          <p class="hint">请完成以下验证：</p>
-          <ol class="steps">
-            <li>前往 <a :href="verifyUrl" target="_blank" class="link">{{ verifyPage }}</a></li>
-            <li>编辑页面，将验证码填入内容并保存：
-              <div class="code-box">
-                {{ verifyCode }}
-                <button class="copy-btn" @click="copyCode">
-                  {{ codeCopied ? '已复制' : '复制' }}
-                </button>
+      <div class="bindings-grid">
+        <div class="card">
+          <h2><i class="fa fa-globe"></i> Fandom 账户绑定</h2>
+          <div v-if="authStore.user.is_fandom_verified" class="bound-state">
+            <div class="bound-info">
+              <img
+                v-if="authStore.user.fandom_avatar_url"
+                :src="authStore.user.fandom_avatar_url"
+                class="fandom-avatar"
+              />
+              <div>
+                <p class="bound-name">{{ authStore.user.fandom_username }}</p>
+                <p class="hint">已成功绑定</p>
               </div>
-            </li>
-            <li>完成后点击验证</li>
-          </ol>
-          <div class="verify-actions">
-            <button
-              class="btn-primary"
-              @click="doVerify"
-              :disabled="verifyLoading"
-            >{{ verifyLoading ? '验证中...' : '我已填写，立即验证' }}</button>
-            <button class="btn-text" @click="cancelBind">取消</button>
+            </div>
+            <button class="btn-danger" @click="handleUnbind">解除绑定</button>
           </div>
-          <div class="error" v-if="verifyError">{{ verifyError }}</div>
-          <div class="success" v-if="verifySuccess">{{ verifySuccess }}</div>
+          <div v-else-if="!verifyCode">
+            <p class="hint">绑定后可评分，头像同步为 Fandom 头像</p>
+            <div class="form-row">
+              <input v-model="fandomUsername" placeholder="输入你的 Fandom 用户名" />
+              <button
+                class="btn-primary"
+                @click="startBind"
+                :disabled="bindLoading"
+              >{{ bindLoading ? '处理中...' : '开始绑定' }}</button>
+            </div>
+            <div class="error" v-if="bindError">{{ bindError }}</div>
+          </div>
+          <div v-else class="verify-step">
+            <p class="hint">请完成以下验证：</p>
+            <ol class="steps">
+              <li>前往 <a :href="verifyUrl" target="_blank" class="link">{{ verifyPage }}</a></li>
+              <li>编辑页面，将验证码填入内容并保存：
+                <div class="code-box">
+                  {{ verifyCode }}
+                  <button class="copy-btn" @click="copyCode">
+                    {{ codeCopied ? '已复制' : '复制' }}
+                  </button>
+                </div>
+              </li>
+              <li>完成后点击验证</li>
+            </ol>
+            <div class="verify-actions">
+              <button
+                class="btn-primary"
+                @click="doVerify"
+                :disabled="verifyLoading"
+              >{{ verifyLoading ? '验证中...' : '我已填写，立即验证' }}</button>
+              <button class="btn-text" @click="cancelBind">取消</button>
+            </div>
+            <div class="error" v-if="verifyError">{{ verifyError }}</div>
+            <div class="success" v-if="verifySuccess">{{ verifySuccess }}</div>
+          </div>
         </div>
-      </div>
 
-      <div class="card">
-        <h2><i class="fa fa-globe"></i> Miraheze 账户绑定</h2>
-        <div v-if="authStore.user.is_miraheze_verified" class="bound-state">
-          <div class="bound-info">
-            <div class="mh-icon">M</div>
-            <div>
-              <p class="bound-name">{{ authStore.user.miraheze_username }}</p>
-              <p class="hint">已成功绑定</p>
-            </div>
-          </div>
-          <button class="btn-danger" @click="handleMirahezeUnbind">解除绑定</button>
-        </div>
-        <div v-else-if="!mhVerifyCode">
-          <p class="hint">绑定后可以对 Miraheze 维基上的页面评分</p>
-          <div class="form-row">
-            <input v-model="mhUsername" placeholder="输入你的 Miraheze 用户名" />
-            <button
-              class="btn-primary"
-              @click="startMirahezeBind"
-              :disabled="mhBindLoading"
-            >{{ mhBindLoading ? '处理中...' : '开始绑定' }}</button>
-          </div>
-          <div class="error" v-if="mhBindError">{{ mhBindError }}</div>
-        </div>
-        <div v-else class="verify-step">
-          <p class="hint">请完成以下验证：</p>
-          <ol class="steps">
-            <li>前往 <a :href="mhVerifyUrl" target="_blank" class="link">{{ mhVerifyPage }}</a></li>
-            <li>编辑页面，将验证码填入内容并保存：
-              <div class="code-box">
-                {{ mhVerifyCode }}
-                <button class="copy-btn" @click="copyMhCode">
-                  {{ mhCodeCopied ? '已复制' : '复制' }}
-                </button>
+        <div class="card">
+          <h2><i class="fa fa-globe"></i> Miraheze 账户绑定</h2>
+          <div v-if="authStore.user.is_miraheze_verified" class="bound-state">
+            <div class="bound-info">
+              <div class="mh-icon">M</div>
+              <div>
+                <p class="bound-name">{{ authStore.user.miraheze_username }}</p>
+                <p class="hint">已成功绑定</p>
               </div>
-            </li>
-            <li>完成后点击验证</li>
-          </ol>
-          <div class="verify-actions">
-            <button
-              class="btn-primary"
-              @click="doMirahezeVerify"
-              :disabled="mhVerifyLoading"
-            >{{ mhVerifyLoading ? '验证中...' : '我已填写，立即验证' }}</button>
-            <button class="btn-text" @click="cancelMirahezeBind">取消</button>
+            </div>
+            <button class="btn-danger" @click="handleMirahezeUnbind">解除绑定</button>
           </div>
-          <div class="error" v-if="mhVerifyError">{{ mhVerifyError }}</div>
-          <div class="success" v-if="mhVerifySuccess">{{ mhVerifySuccess }}</div>
+          <div v-else-if="!mhVerifyCode">
+            <p class="hint">绑定后可以对 Miraheze 维基上的页面评分</p>
+            <div class="form-row">
+              <input v-model="mhUsername" placeholder="输入你的 Miraheze 用户名" />
+              <button
+                class="btn-primary"
+                @click="startMirahezeBind"
+                :disabled="mhBindLoading"
+              >{{ mhBindLoading ? '处理中...' : '开始绑定' }}</button>
+            </div>
+            <div class="error" v-if="mhBindError">{{ mhBindError }}</div>
+          </div>
+          <div v-else class="verify-step">
+            <p class="hint">请完成以下验证：</p>
+            <ol class="steps">
+              <li>前往 <a :href="mhVerifyUrl" target="_blank" class="link">{{ mhVerifyPage }}</a></li>
+              <li>编辑页面，将验证码填入内容并保存：
+                <div class="code-box">
+                  {{ mhVerifyCode }}
+                  <button class="copy-btn" @click="copyMhCode">
+                    {{ mhCodeCopied ? '已复制' : '复制' }}
+                  </button>
+                </div>
+              </li>
+              <li>完成后点击验证</li>
+            </ol>
+            <div class="verify-actions">
+              <button
+                class="btn-primary"
+                @click="doMirahezeVerify"
+                :disabled="mhVerifyLoading"
+              >{{ mhVerifyLoading ? '验证中...' : '我已填写，立即验证' }}</button>
+              <button class="btn-text" @click="cancelMirahezeBind">取消</button>
+            </div>
+            <div class="error" v-if="mhVerifyError">{{ mhVerifyError }}</div>
+            <div class="success" v-if="mhVerifySuccess">{{ mhVerifySuccess }}</div>
+          </div>
         </div>
       </div>
     </div>
@@ -310,9 +312,21 @@ async function copyMhCode() {
   padding: var(--space-16) 0;
 }
 .content {
-  max-width: 720px;
+  max-width: 1000px;
   margin: 0 auto;
   padding: 0 var(--space-6);
+}
+
+/* ── 绑定卡片双栏网格 ── */
+.bindings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+}
+.bindings-grid .card {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .card {
@@ -585,7 +599,11 @@ async function copyMhCode() {
   margin-top: var(--space-3);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .bindings-grid {
+    grid-template-columns: 1fr;
+  }
+
   .user-header { flex-wrap: wrap; }
   .form-row { flex-wrap: wrap; }
 }

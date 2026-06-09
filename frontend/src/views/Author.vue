@@ -174,7 +174,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.author-page { max-width: 900px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
+.author-page { max-width: 1200px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
 
 .author-header { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-10); }
 .author-avatar-wrap { flex-shrink: 0; }
@@ -247,12 +247,16 @@ onMounted(async () => {
 .btn-all:hover { background: var(--color-primary); color: #fff; }
 .btn-all:active { transform: scale(0.96); }
 
-.page-list { display: flex; flex-direction: column; position: relative; }
+.page-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
+  position: relative;
+}
 .page-item {
   display: flex; align-items: center; gap: var(--space-4);
-  padding: var(--space-4) var(--space-4);
+  padding: var(--space-6);
   border-radius: var(--radius-sm);
-  margin: 0 calc(-1 * var(--space-4));
   cursor: pointer;
   transition: background-color var(--duration-base) var(--ease-smooth);
 }
@@ -305,4 +309,10 @@ onMounted(async () => {
 .pagination span { font-size: var(--text-sm); color: var(--color-muted); }
 
 .loading, .empty, .error { text-align: center; padding: var(--space-10) 0; color: var(--color-muted); }
+
+@media (max-width: 1024px) {
+  .page-list {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

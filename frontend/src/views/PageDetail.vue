@@ -13,8 +13,9 @@
 
     <div v-else-if="page">
       <Transition name="fade-up" appear>
-        <div>
-          <div class="card">
+        <div class="detail-grid">
+          <!-- ── 通栏：标题 ── -->
+          <div class="card grid-full">
             <h1>{{ page.title }}</h1>
             <div class="meta">
               <span>
@@ -27,13 +28,17 @@
               </span>
               <span>字数：{{ page.word_count }}</span>
               <span>最后编辑：{{ formatDate(page.last_edited_at) }}</span>
+              <span>#{{ route.params.id }}</span>
             </div>
             <div class="categories" v-if="page.categories.length">
               <span class="cat-tag" v-for="cat in page.categories" :key="cat">
                 {{ cat }}
               </span>
             </div>
+          </div>
 
+          <!-- ── 通栏：评分双栏 ── -->
+          <div class="ratings-row grid-full">
             <div class="rating-box">
               <h2>Wikiio评分</h2>
               <div class="rating-body">
@@ -109,17 +114,27 @@
                   <span class="dist-item">总分 {{ siteRating.total_points }}</span>
                 </div>
               </div>
-              <div class="site-rating-note" v-if="siteRating.scale === 5">
-                数据来源：原站 RatePage 扩展
-              </div>
+              <div class="site-rating-note">数据来源：原站 RatePage 扩展</div>
             </div>
           </div>
 
-          <div class="card">
+          <!-- ── 主栏：Wikitext 源代码 ── -->
+          <div class="card grid-main">
+            <div class="wikitext-header">
+              <h2>Wikitext 源代码</h2>
+              <button class="copy-btn" @click="copyWikitext">
+                {{ copied ? '已复制！' : '复制' }}
+              </button>
+            </div>
+            <pre class="wikitext">{{ page.wikitext }}</pre>
+          </div>
+
+          <!-- ── 侧栏：编辑历史 ── -->
+          <div class="card grid-side">
             <h2>编辑历史</h2>
             <div
               class="rev-item"
-              v-for="rev in page.recent_revisions"
+              v-for="rev in paginatedRevisions"
               :key="rev.rev_id"
             >
               <div class="rev-row">
@@ -128,16 +143,11 @@
               </div>
               <div class="rev-comment">{{ rev.comment || '（无编辑摘要）' }}</div>
             </div>
-          </div>
-
-          <div class="card">
-            <div class="wikitext-header">
-              <h2>Wikitext 源代码</h2>
-              <button class="copy-btn" @click="copyWikitext">
-                {{ copied ? '已复制！' : '复制' }}
-              </button>
+            <div class="rev-pagination" v-if="page.recent_revisions.length > revPageLimit">
+              <button :disabled="revPageSkip === 0" @click="prevRevPage">上一页</button>
+              <span>第 {{ currentRevPage }} / {{ totalRevPages }} 页</span>
+              <button :disabled="revPageSkip + revPageLimit >= page.recent_revisions.length" @click="nextRevPage">下一页</button>
             </div>
-            <pre class="wikitext">{{ page.wikitext }}</pre>
           </div>
         </div>
       </Transition>
@@ -178,6 +188,7 @@ async function copyWikitext() {
 onMounted(async () => {
   try {
     page.value = await pageAPI.get(route.params.id)
+    revPageSkip.value = 0
     if (page.value?.site_id) {
       try { site.value = await siteAPI.get(page.value.site_id) }
       catch { site.value = null }
@@ -233,7 +244,6 @@ const siteRating = ref(null)
 const siteAvgDisplay = computed(() => {
   if (!siteRating.value) return '0.0'
   if (siteRating.value.scale === 5) {
-    // 把后端换算过的 10 分制转回 5 分制显示
     return (siteRating.value.avg_rating / 2).toFixed(1)
   }
   return siteRating.value.avg_rating.toFixed(1)
@@ -245,10 +255,34 @@ async function loadSiteRating() {
     if (r.available) siteRating.value = r
   } catch {}
 }
+
+/* ── 编辑历史分页 ── */
+const revPageLimit = 10
+const revPageSkip = ref(0)
+
+const paginatedRevisions = computed(() =>
+  page.value?.recent_revisions?.slice(revPageSkip.value, revPageSkip.value + revPageLimit) || []
+)
+
+const currentRevPage = computed(() => Math.floor(revPageSkip.value / revPageLimit) + 1)
+
+const totalRevPages = computed(() =>
+  Math.ceil((page.value?.recent_revisions?.length || 0) / revPageLimit)
+)
+
+function prevRevPage() {
+  revPageSkip.value = Math.max(0, revPageSkip.value - revPageLimit)
+}
+
+function nextRevPage() {
+  if (page.value) {
+    revPageSkip.value += revPageLimit
+  }
+}
 </script>
 
 <style scoped>
-.detail-page { max-width: 860px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
+.detail-page { max-width: 1200px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
 
 .topbar {
   display: flex; justify-content: space-between;
@@ -267,11 +301,37 @@ async function loadSiteRating() {
 .wiki-link:hover { background: var(--color-primary); color: #fff; text-decoration: none; }
 .wiki-link:active { transform: scale(0.96); }
 
+/* ── 双栏网格 ── */
+.detail-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--space-8);
+  align-items: start;
+}
+
+/* 通栏卡片：标题 + 评分横跨两列 */
+.grid-full { grid-column: 1 / -1; }
+
+/* 主栏卡片：Wikitext 锁定左侧 */
+.grid-main { grid-column: 1; }
+
+/* 侧栏卡片：编辑历史锁定右侧 */
+.grid-side { grid-column: 2; }
+
+/* ── 评分双栏 ── */
+.ratings-row {
+  display: flex;
+  gap: var(--space-6);
+}
+.ratings-row > .rating-box { flex: 1; }
+.ratings-row > .site-rating-card { flex: 1; }
+
+/* ── 卡片基础 ── */
 .card {
   background: var(--color-canvas);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-card);
-  padding: var(--space-8); margin-bottom: var(--space-6);
+  padding: var(--space-8);
 }
 .card h1 {
   font-size: var(--text-2xl); font-weight: 600;
@@ -289,7 +349,7 @@ async function loadSiteRating() {
   color: var(--color-muted); font-size: var(--text-sm);
   margin-bottom: var(--space-4); flex-wrap: wrap;
 }
-.categories { display: flex; gap: var(--space-1); flex-wrap: wrap; margin-bottom: var(--space-5); }
+.categories { display: flex; gap: var(--space-1); flex-wrap: wrap; margin-bottom: 0; }
 .cat-tag {
   background: var(--color-parchment);
   padding: var(--space-1) var(--space-3);
@@ -297,8 +357,12 @@ async function loadSiteRating() {
   font-size: var(--text-sm); color: var(--color-muted);
 }
 
+/* ── Wikiio 评分 ── */
 .rating-box {
-  margin-bottom: var(--space-6);
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-card);
+  padding: var(--space-6);
 }
 .rating-box h2 {
   font-size: var(--text-lg); font-weight: 600;
@@ -306,22 +370,29 @@ async function loadSiteRating() {
   margin-bottom: var(--space-5);
 }
 .rating-body {
-  display: flex; align-items: center; gap: var(--space-8);
-  padding: var(--space-6); background: var(--color-parchment);
-  border-radius: 12px; flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: var(--space-5);
+  background: var(--color-parchment);
+  border-radius: 12px;
 }
 .rating-left {
-  display: flex; flex-direction: column;
-  align-items: center; gap: var(--space-1);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
 }
 .rating-score {
-  font-size: var(--text-4xl); font-weight: 600;
+  font-size: var(--text-3xl); font-weight: 600;
   color: var(--color-primary); line-height: 1;
 }
-.rating-stars-display .star { font-size: var(--text-base); color: var(--color-hairline); }
+.rating-stars-display .star { font-size: var(--text-sm); color: var(--color-hairline); }
 .rating-stars-display .star.filled { color: var(--color-primary); }
-.rating-count { color: var(--color-muted); font-size: var(--text-sm); }
-.rating-right { flex: 1; }
+.rating-count { color: var(--color-muted); font-size: var(--text-sm); white-space: nowrap; }
+.rating-right { width: 100%; }
 .rating-hint { font-size: var(--text-sm); color: var(--color-muted); }
 .rating-hint a { color: var(--color-primary); }
 .my-rating-label {
@@ -353,9 +424,12 @@ async function loadSiteRating() {
 .rating-msg.success { color: var(--color-success); }
 .rating-msg.error { color: var(--color-danger); }
 
+/* ── 原站评分 ── */
 .site-rating-card {
   background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
   border-radius: var(--radius-card);
+  padding: var(--space-6);
 }
 .site-rating-card h2 {
   font-size: var(--text-lg); font-weight: 600;
@@ -363,22 +437,29 @@ async function loadSiteRating() {
   margin-bottom: var(--space-5);
 }
 .site-rating-body {
-  display: flex; align-items: center; gap: var(--space-8);
-  padding: var(--space-6); background: var(--color-parchment);
-  border-radius: 12px; flex-wrap: wrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-6);
+  padding: var(--space-5);
+  background: var(--color-parchment);
+  border-radius: 12px;
 }
 .site-rating-left {
-  display: flex; flex-direction: column;
-  align-items: center; gap: var(--space-1);
-  flex-shrink: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
 }
 .site-rating-score {
-  font-size: var(--text-4xl); font-weight: 600;
+  font-size: var(--text-3xl); font-weight: 600;
   color: var(--color-primary); line-height: 1;
 }
 .site-rating-right {
   display: flex; gap: var(--space-2);
   flex-wrap: wrap; align-items: center;
+  width: 100%;
 }
 .dist-item {
   font-size: var(--text-xs);
@@ -392,6 +473,7 @@ async function loadSiteRating() {
   margin-top: var(--space-3);
 }
 
+/* ── 编辑历史 ── */
 .rev-item {
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--color-hairline);
@@ -405,6 +487,30 @@ async function loadSiteRating() {
 .rev-time { color: var(--color-muted); font-size: var(--text-sm); }
 .rev-comment { color: var(--color-muted); font-size: var(--text-sm); }
 
+.rev-pagination {
+  display: flex; justify-content: center;
+  align-items: center; gap: var(--space-4);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-hairline);
+}
+.rev-pagination button {
+  padding: var(--space-2) var(--space-5);
+  background: var(--color-primary); color: #fff;
+  border: none; border-radius: var(--radius-pill);
+  cursor: pointer; font-family: inherit; font-size: var(--text-sm);
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-apple);
+}
+.rev-pagination button:hover { opacity: 0.9; }
+.rev-pagination button:active { transform: scale(0.96); }
+.rev-pagination button:disabled {
+  background: var(--color-parchment);
+  color: var(--color-muted); cursor: not-allowed; transform: none;
+}
+.rev-pagination span { font-size: var(--text-sm); color: var(--color-muted); }
+
+/* ── Wikitext ── */
 .wikitext-header {
   display: flex; justify-content: space-between;
   align-items: center; margin-bottom: var(--space-4);
@@ -431,4 +537,21 @@ async function loadSiteRating() {
 .loading, .error { text-align: center; padding: var(--space-16) 0; color: var(--color-muted); }
 .author-link { color: var(--color-primary); font-weight: 500; }
 .author-link:hover { text-decoration: underline; }
+
+/* ── 移动端 ── */
+@media (max-width: 768px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .grid-full, .grid-main, .grid-side {
+    grid-column: auto;
+  }
+
+  .ratings-row {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+}
 </style>
