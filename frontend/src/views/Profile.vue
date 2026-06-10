@@ -29,9 +29,9 @@
           </div>
           <button class="btn-logout" @click="handleLogout">退出登录</button>
         </div>
-        <div class="author-link" v-if="authStore.user.is_fandom_verified">
-          <a :href="`/author/${authStore.user.fandom_username}`" class="btn-author">
-            查看我的作者页 <i class="fa fa-arrow-right"></i>
+        <div class="author-links" v-if="authStore.user.is_fandom_verified || authStore.user.is_miraheze_verified">
+          <a v-if="authStore.user.is_fandom_verified" :href="`/author/${authStore.user.fandom_username}`" class="btn-author">
+            统一作者页 <i class="fa fa-arrow-right"></i>
           </a>
         </div>
       </div>
@@ -46,9 +46,11 @@
                 :src="authStore.user.fandom_avatar_url"
                 class="fandom-avatar"
               />
+              <img v-else src="/fandom-logo.svg" class="fd-logo" />
               <div>
                 <p class="bound-name">{{ authStore.user.fandom_username }}</p>
                 <p class="hint">已成功绑定</p>
+                <a :href="`/fd-author/${authStore.user.fandom_username}`" class="bound-link">查看我的Fandom作者页 →</a>
               </div>
             </div>
             <button class="btn-danger" @click="handleUnbind">解除绑定</button>
@@ -96,10 +98,11 @@
           <h2><i class="fa fa-globe"></i> Miraheze 账户绑定</h2>
           <div v-if="authStore.user.is_miraheze_verified" class="bound-state">
             <div class="bound-info">
-              <div class="mh-icon">M</div>
+              <img src="/miraheze-logo.svg" class="mh-logo" />
               <div>
                 <p class="bound-name">{{ authStore.user.miraheze_username }}</p>
                 <p class="hint">已成功绑定</p>
+                <a :href="`/mh-author/${authStore.user.miraheze_username}`" class="bound-link">查看我的Miraheze作者页 →</a>
               </div>
             </div>
             <button class="btn-danger" @click="handleMirahezeUnbind">解除绑定</button>
@@ -393,6 +396,13 @@ async function copyMhCode() {
   color: var(--color-danger);
 }
 .btn-logout:active { transform: scale(0.96); }
+.bound-link {
+  display: inline-block;
+  margin-top: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-primary);
+}
+.bound-link:hover { text-decoration: underline; }
 .user-card { position: relative; }
 .user-badges {
   display: flex;
@@ -413,7 +423,7 @@ async function copyMhCode() {
 .fandom { background: #e8f4fd; color: var(--color-primary); }
 .miraheze { background: #FFFBD8; color: #c5a800; }
 
-.author-link { margin-top: var(--space-4); }
+.author-links { margin-top: var(--space-4); }
 .btn-author {
   display: inline-flex;
   align-items: center;
@@ -462,17 +472,14 @@ async function copyMhCode() {
   height: 48px;
   border-radius: 50%;
 }
-.mh-icon {
+.mh-logo,
+.fd-logo {
   width: 48px;
   height: 48px;
   border-radius: 50%;
+  object-fit: contain;
   background: var(--color-parchment);
-  color: var(--color-ink);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 20px;
+  padding: 6px;
 }
 
 .btn-danger {

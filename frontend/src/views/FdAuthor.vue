@@ -1,12 +1,8 @@
 <template>
-  <div class="author-page">
-    <div class="wikiio-header-bar">
-      <div class="wikiio-header-logos">
-        <img src="/fandom-logo.svg" class="wikiio-header-logo" />
-        <span class="wikiio-header-plus">+</span>
-        <img src="/miraheze-logo.svg" class="wikiio-header-logo" />
-      </div>
-      <span>Wikiio 作者页</span>
+  <div class="fd-author-page">
+    <div class="fd-header-bar">
+      <img src="/fandom-logo.svg" class="fd-header-logo" />
+      <span>Fandom 作者页</span>
     </div>
 
     <div v-if="loading" class="loading">加载中...</div>
@@ -15,7 +11,12 @@
         <div>
           <div class="author-header">
             <div class="author-avatar-wrap">
-              <div class="author-avatar wikiio-avatar">
+              <img
+                v-if="authorProfile?.avatar_url"
+                :src="authorProfile.avatar_url"
+                class="author-avatar-img"
+              />
+              <div v-else class="author-avatar fd-avatar">
                 {{ authorName[0]?.toUpperCase() }}
               </div>
             </div>
@@ -127,6 +128,7 @@ import { pageAPI, siteAPI } from '../api/index.js'
 
 const route = useRoute()
 const router = useRouter()
+const authorProfile = ref(null)
 const authorName = computed(() => decodeURIComponent(route.params.author))
 const stats = ref(null)
 const pagesData = ref(null)
@@ -165,9 +167,11 @@ onMounted(async () => {
     const r = await Promise.all([
       siteAPI.list(),
       pageAPI.authorStats(authorName.value),
+      pageAPI.authorProfile(authorName.value),
     ])
     sitesMap.value = Object.fromEntries(r[0].map(s => [s.site_id, s.name]))
     stats.value = r[1]
+    authorProfile.value = r[2]
     await loadPages()
   } catch (e) { console.error(e); stats.value = null }
   finally { loading.value = false }
@@ -175,25 +179,18 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.author-page { max-width: 1200px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
+.fd-author-page { max-width: 1200px; margin: 0 auto; padding: var(--space-16) var(--space-6); }
 
-.wikiio-header-bar {
+.fd-header-bar {
   display: flex; align-items: center; gap: var(--space-3);
   margin-bottom: var(--space-10);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-hairline);
 }
-.wikiio-header-logos {
-  display: flex; align-items: center; gap: var(--space-1);
+.fd-header-logo {
+  width: 28px; height: 28px;
 }
-.wikiio-header-logo {
-  width: 22px; height: 22px;
-}
-.wikiio-header-plus {
-  font-size: var(--text-sm); color: var(--color-muted);
-  margin: 0 var(--space-1);
-}
-.wikiio-header-bar span {
+.fd-header-bar span {
   font-size: var(--text-base);
   font-weight: 600;
   color: var(--color-muted);
@@ -201,14 +198,15 @@ onMounted(async () => {
 
 .author-header { display: flex; align-items: center; gap: var(--space-6); margin-bottom: var(--space-10); }
 .author-avatar-wrap { flex-shrink: 0; }
-.author-avatar { width: 88px; height: 88px; border-radius: 50%; }
-.wikiio-avatar {
-  background: linear-gradient(135deg, #185897, #3a7fc1);
+.author-avatar, .author-avatar-img { width: 88px; height: 88px; border-radius: 50%; }
+.fd-avatar {
+  background: linear-gradient(135deg, #fa005a, #ff6b8a);
   color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: var(--text-3xl); font-weight: 600;
   box-shadow: 0 0 0 4px var(--color-parchment), 0 0 0 5px var(--color-hairline);
 }
+.author-avatar-img { object-fit: cover; }
 .author-info h1 {
   font-size: var(--text-2xl); font-weight: 600;
   color: var(--color-ink); letter-spacing: -0.02em;

@@ -11,6 +11,8 @@ const router = createRouter({
     { path: '/admin', component: () => import('../views/Admin.vue'), meta: { requiresAuth: true } },
     { path: '/rankings', component: () => import('../views/Rankings.vue') },
     { path: '/author/:author', component: () => import('../views/Author.vue') },
+    { path: '/mh-author/:author', component: () => import('../views/MhAuthor.vue') },
+    { path: '/fd-author/:author', component: () => import('../views/FdAuthor.vue') },
     { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
     { path: '/wiki/:siteId', component: () => import('../views/WikiStats.vue') },
   ],
