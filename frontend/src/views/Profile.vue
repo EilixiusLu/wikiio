@@ -30,7 +30,7 @@
           <button class="btn-logout" @click="handleLogout">退出登录</button>
         </div>
         <div class="author-links" v-if="authStore.user.is_fandom_verified || authStore.user.is_miraheze_verified">
-          <a v-if="authStore.user.is_fandom_verified" :href="`/author/${authStore.user.fandom_username}`" class="btn-author">
+          <a :href="`/author/${authStore.user.username}`" class="btn-author">
             统一作者页 <i class="fa fa-arrow-right"></i>
           </a>
         </div>
