@@ -48,6 +48,11 @@ celery_app.conf.update(
             ),
             "options": {"expires": 3600},       # 任务 1 小时内未执行则过期跳过
         },
+        "cleanup-old-logs": {
+            "task": "app.crawler.scheduler.cleanup_logs_task",
+            "schedule": crontab(hour="3", minute="0", day_of_week="1"),  # 每周一凌晨3点
+            "options": {"expires": 3600},
+        },
     },
 )
 
@@ -79,6 +84,19 @@ def crawl_incremental_task(self):
     except Exception as exc:
         logger.error(f"定时增量爬取出错: {exc}")
         raise self.retry(exc=exc)
+
+
+@celery_app.task(
+    name="app.crawler.scheduler.cleanup_logs_task",
+    bind=True,
+    max_retries=0,
+)
+def cleanup_logs_task(self):
+    """Celery Beat 定时任务：每周清理一次过期日志文件"""
+    from app.utils.logger import cleanup_old_logs
+    result = cleanup_old_logs()
+    logger.info(f"定时日志清理完成: 删除 {result['deleted']} 个文件")
+    return result
 
 
 @celery_app.task(
