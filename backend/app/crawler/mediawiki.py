@@ -3,18 +3,35 @@ import asyncio
 from typing import Optional
 import logging
 
+from app.utils.url_validator import validate_api_url
+
 logger = logging.getLogger(__name__)
 
 class MediaWikiClient:
     """封装MediaWiki API的所有请求，支持礼貌爬取限速"""
 
     def __init__(self, api_url: str, requests_per_second: float = 0.5):
-        self.api_url = api_url
+        # SSRF 深度防御: 构造前再次校验 api_url
+        self.api_url = validate_api_url(api_url)
         self.delay = 1.0 / requests_per_second
         self._last_request_time = 0.0
         self.headers = {
                 "User-Agent": "Wikiio/0.1 (Wiki data analysis platform; dec_verniy@hotmail.com; polite crawler)"
         }
+        # 预构造一个带 transport 限制的 client（连接池复用 + SSRF 终末防护）
+        self._client = None
+
+    def _get_client(self) -> httpx.AsyncClient:
+        """懒加载 httpx 客户端，设置终末安全参数"""
+        if self._client is None:
+            limits = httpx.Limits(max_connections=5, max_keepalive_connections=2)
+            self._client = httpx.AsyncClient(
+                headers=self.headers,
+                timeout=httpx.Timeout(30.0, connect=10.0),
+                follow_redirects=False,  # 禁止跟随重定向，防 SSRF 重定向攻击
+                limits=limits,
+            )
+        return self._client
 
     async def _request(self, params: dict) -> Optional[dict]:
         """发送一次API请求，自动限速"""
@@ -27,11 +44,11 @@ class MediaWikiClient:
         params["utf8"] = "1"
 
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=30) as client:
-                response = await client.get(self.api_url, params=params)
-                response.raise_for_status()
-                self._last_request_time = asyncio.get_event_loop().time()
-                return response.json()
+            client = self._get_client()
+            response = await client.get(self.api_url, params=params)
+            response.raise_for_status()
+            self._last_request_time = asyncio.get_event_loop().time()
+            return response.json()
         except httpx.HTTPError as e:
             logger.error(f"HTTP请求失败: {e}")
             return None

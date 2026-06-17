@@ -122,6 +122,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import DOMPurify from 'dompurify'
 import { siteAPI, searchAPI } from '../api/index.js'
 
 const router = useRouter()
@@ -144,16 +145,47 @@ const searchWikitext = ref(true)
 const currentPage = computed(() => Math.floor(skip.value / limit) + 1)
 const totalPages = computed(() => Math.ceil(total.value / limit))
 
+/** HTML 实体转义映射表 */
+const HTML_ENTITIES = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#039;',
+}
+
+/**
+ * 将文本中的 HTML 特殊字符转义为实体，防止 XSS。
+ * 这是 v-html 渲染前的第一道防线。
+ */
+function escapeHtml(text) {
+  if (!text) return ''
+  return String(text).replace(/[&<>"']/g, ch => HTML_ENTITIES[ch] || ch)
+}
+
+/**
+ * 安全的高亮函数：先转义原文本中的所有 HTML，再对匹配的搜索词
+ * 包裹 <mark> 标签，最后经 DOMPurify 清洗后交由 v-html 渲染。
+ */
+function highlight(text) {
+  if (!text) return ''
+  // 第一步: 转义所有 HTML 实体，消灭存储型 XSS 载荷
+  const safe = escapeHtml(text)
+  // 无搜索词时直接返回已转义的安全文本
+  if (!query.value) return safe
+  // 第二步: 转义搜索词中的正则特殊字符
+  const escaped = query.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  // 第三步: 用 <mark> 包裹匹配部分（<mark> 是安全的白名单标签）
+  const highlighted = safe.replace(new RegExp(escaped, 'gi'), m => `<mark>${m}</mark>`)
+  // 第四步: DOMPurify 终末清洗，确保只有 <mark> 标签通过
+  return DOMPurify.sanitize(highlighted, { ALLOWED_TAGS: ['mark'] })
+}
+
 function formatDate(d) {
   if (!d) return ''
   return new Date(d).toLocaleDateString('zh-CN')
 }
 function goToPage(id) { router.push(`/page/${id}`) }
-function highlight(text) {
-  if (!query.value) return text
-  const escaped = query.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  return text.replace(new RegExp(escaped, 'gi'), m => `<mark>${m}</mark>`)
-}
 async function doSearch() {
   if (!query.value.trim() && !selectedCategory.value) return
   skip.value = 0
