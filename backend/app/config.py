@@ -1,7 +1,9 @@
+from typing import List
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     DATABASE_URL: str
     REDIS_URL: str
@@ -12,8 +14,8 @@ class Settings(BaseSettings):
     MAIL_SERVER: str = ""
     ENVIRONMENT: str = "development"
 
-    # CORS 允许的来源（逗号分隔，用于 Docker 等环境配置）
-    CORS_ORIGINS: str = "http://localhost:5173,http://127.0.0.1"
+    # CORS 允许的来源（环境变量用逗号分隔，如 "https://wikiio.verniy.site,http://localhost:5173"）
+    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 
     # Redis 缓存配置
     REDIS_CACHE_TTL_DEFAULT: int = 300       # 默认缓存 TTL（秒）

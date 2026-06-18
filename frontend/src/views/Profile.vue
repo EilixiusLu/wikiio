@@ -30,9 +30,9 @@
           <button class="btn-logout" @click="handleLogout">退出登录</button>
         </div>
         <div class="author-links" v-if="authStore.user.is_fandom_verified || authStore.user.is_miraheze_verified">
-          <a :href="`/author/${authStore.user.username}`" class="btn-author">
+          <router-link :to="`/author/${authStore.user.username}`" class="btn-author">
             统一作者页 <i class="fa fa-arrow-right"></i>
-          </a>
+          </router-link>
         </div>
       </div>
 
@@ -50,7 +50,7 @@
               <div>
                 <p class="bound-name">{{ authStore.user.fandom_username }}</p>
                 <p class="hint">已成功绑定</p>
-                <a :href="`/fd-author/${authStore.user.fandom_username}`" class="bound-link">查看我的Fandom作者页 →</a>
+                <router-link :to="`/fd-author/${authStore.user.fandom_username}`" class="bound-link">查看我的Fandom作者页 →</router-link>
               </div>
             </div>
             <button class="btn-danger" @click="handleUnbind">解除绑定</button>
@@ -102,7 +102,7 @@
               <div>
                 <p class="bound-name">{{ authStore.user.miraheze_username }}</p>
                 <p class="hint">已成功绑定</p>
-                <a :href="`/mh-author/${authStore.user.miraheze_username}`" class="bound-link">查看我的Miraheze作者页 →</a>
+                <router-link :to="`/mh-author/${authStore.user.miraheze_username}`" class="bound-link">查看我的Miraheze作者页 →</router-link>
               </div>
             </div>
             <button class="btn-danger" @click="handleMirahezeUnbind">解除绑定</button>

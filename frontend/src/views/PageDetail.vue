@@ -20,10 +20,10 @@
             <div class="meta">
               <span>
                 作者：
-                <a
-                  v-if="page.author" :href="`/author/${page.author}`"
+                <router-link
+                  v-if="page.author" :to="`/author/${page.author}`"
                   class="author-link" @click.stop
-                >{{ page.author }}</a>
+                >{{ page.author }}</router-link>
                 <b v-else>未知</b>
               </span>
               <span>字数：{{ page.word_count }}</span>
@@ -56,12 +56,12 @@
 
                 <div class="rating-right">
                   <div v-if="!authStore.isLoggedIn" class="rating-hint">
-                    <a href="/login">登录</a>后才能评分
+                    <router-link to="/login">登录</router-link>后才能评分
                   </div>
                   <div
                     v-else-if="!authStore.user?.is_fandom_verified"
                     class="rating-hint"
-                  >请先<a href="/profile">绑定Fandom账户</a>才能评分</div>
+                  >请先<router-link to="/profile">绑定Fandom账户</router-link>才能评分</div>
                   <div v-else>
                     <div class="my-rating-label">
                       {{ myScore ? '我的评分' : '点击评分' }}

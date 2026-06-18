@@ -15,7 +15,7 @@
         <button class="btn-primary" @click="handleLogin" :disabled="loading">
           {{ loading ? '登录中...' : '登录' }}
         </button>
-        <p>还没有账号？<a href="/register">立即注册</a></p>
+        <p>还没有账号？<router-link to="/register">立即注册</router-link></p>
       </div>
     </Transition>
   </div>

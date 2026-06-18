@@ -4,15 +4,15 @@
       <div class="footer-grid">
         <div class="footer-col">
           <h4>站点功能</h4>
-          <a href="/">维基统计</a>
-          <a href="/search">页面搜索</a>
-          <a href="/rankings">作者排名</a>
+          <router-link to="/">维基统计</router-link>
+          <router-link to="/search">页面搜索</router-link>
+          <router-link to="/rankings">作者排名</router-link>
         </div>
         <div class="footer-col">
           <h4>关于</h4>
-          <a href="/">关于 Wikiio</a>
-          <a href="/">数据来源</a>
-          <a href="/">联系方式</a>
+          <router-link to="/">关于 Wikiio</router-link>
+          <router-link to="/">数据来源</router-link>
+          <router-link to="/">联系方式</router-link>
         </div>
         <div class="footer-col">
           <h4>Wikiio</h4>

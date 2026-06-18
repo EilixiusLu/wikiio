@@ -1,3 +1,15 @@
+# =============================================================================
+# 此 Dockerfile 仅用于本地容器化预览，不用于生产部署。
+#
+# 生产环境前端已改为纯静态托管（EdgeOne Pages）:
+#   1. 本地/CI 执行 npm run build
+#   2. 将 frontend/dist/ 上传至 EdgeOne Pages
+#
+# 本地预览用法:
+#   docker build -t wikiio-frontend -f frontend/Dockerfile .
+#   docker run -p 8080:80 wikiio-frontend
+# =============================================================================
+
 # ---- Build Stage ----
 FROM node:22-alpine AS build
 

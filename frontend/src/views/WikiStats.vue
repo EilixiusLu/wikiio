@@ -40,9 +40,9 @@
         <div class="section">
           <div class="section-header">
             <h2>最新页面</h2>
-            <a :href="`/search?site=${siteId}`" class="more-link">
+            <router-link :to="`/search?site=${siteId}`" class="more-link">
               查看更多 <i class="fa fa-arrow-right"></i>
-            </a>
+            </router-link>
           </div>
           <div v-if="pagesLoading" class="loading-sm">加载中...</div>
           <TransitionGroup name="list" tag="div" v-else>
@@ -55,9 +55,9 @@
               <div class="page-main">
                 <div class="page-title">{{ page.title }}</div>
                 <div class="page-meta">
-                  <a :href="`/author/${page.author}`" class="author-link" @click.stop>
+                  <router-link :to="`/author/${page.author}`" class="author-link" @click.stop>
                     {{ page.author || '未知' }}
-                  </a>
+                  </router-link>
                   <span>{{ page.word_count }} 字</span>
                   <span>{{ formatDate(page.last_edited_at) }}</span>
                 </div>
@@ -76,9 +76,9 @@
         <div class="section">
           <div class="section-header">
             <h2>创作者排名</h2>
-            <a :href="`/rankings?site=${siteId}`" class="more-link">
+            <router-link :to="`/rankings?site=${siteId}`" class="more-link">
               完整榜单 <i class="fa fa-arrow-right"></i>
-            </a>
+            </router-link>
           </div>
           <TransitionGroup name="list" tag="div">
             <div
@@ -87,9 +87,9 @@
               :key="author.author"
             >
               <span class="rank" :class="'rank-' + Math.min(index + 1, 3)">{{ index + 1 }}</span>
-              <a :href="`/author/${author.author}`" class="author-name">
+              <router-link :to="`/author/${author.author}`" class="author-name">
                 {{ author.author }}
-              </a>
+              </router-link>
               <span class="author-count">{{ author.page_count }} 篇</span>
             </div>
           </TransitionGroup>

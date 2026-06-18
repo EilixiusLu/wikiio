@@ -118,9 +118,9 @@
         >
           <span class="rank-num">{{ index + 1 }}</span>
           <div class="rank-main">
-            <a :href="`/author/${author.author}`" class="rank-title">
+            <router-link :to="`/author/${author.author}`" class="rank-title">
               {{ author.author }}
-            </a>
+            </router-link>
             <div class="rank-meta">
               <span>{{ author.page_count }} 篇文章</span>
               <span>{{ author.total_words.toLocaleString() }} 字</span>

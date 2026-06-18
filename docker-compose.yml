@@ -1,3 +1,13 @@
+# =============================================================================
+# Wikiio Docker Compose — 后端服务编排（前端已迁至 EdgeOne Pages 静态托管）
+#
+# 服务清单（5 项）:
+#   1. postgres      — PostgreSQL 16 数据库
+#   2. redis         — Redis 7 缓存 + Celery Broker
+#   3. backend       — FastAPI 应用 (:8000)
+#   4. celery-worker — Celery 异步任务执行器
+#   5. celery-beat   — Celery 定时任务调度器
+# =============================================================================
 services:
   postgres:
     image: postgres:16-alpine
@@ -46,7 +56,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://wikiio:wikiio%40lck@postgres:5432/wikiio_db
       REDIS_URL: redis://redis:6379/0
       ENVIRONMENT: production
-      CORS_ORIGINS: "http://localhost:5173,http://127.0.0.1,http://localhost"
+      CORS_ORIGINS: "https://wikiio.verniy.site,http://localhost:5173,http://127.0.0.1:5173"
     volumes:
       - logs:/logs
     ports:
@@ -107,20 +117,6 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_healthy
-    networks:
-      - app-network
-
-  frontend:
-    build:
-      context: .
-      dockerfile: frontend/Dockerfile
-    container_name: wikiio-frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    depends_on:
-      backend:
         condition: service_healthy
     networks:
       - app-network

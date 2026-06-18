@@ -2,23 +2,23 @@
   <nav class="navbar">
     <div class="navbar-inner">
       <div class="navbar-left">
-        <a href="/" class="navbar-logo">
+        <router-link to="/" class="navbar-logo">
           <img src="/wikiio-logo.svg" alt="Wikiio" class="logo-img" />
-        </a>
+        </router-link>
 
         <!-- 桌面端导航链接 -->
         <div class="navbar-links">
-          <a href="/" :class="{ active: route.path === '/' }">首页</a>
-          <a href="/search" :class="{ active: route.path === '/search' }">搜索</a>
-          <a href="/rankings" :class="{ active: route.path === '/rankings' }">排名</a>
-          <a v-if="authStore.user?.role >= 3" href="/admin" :class="{ active: route.path === '/admin' }">管理</a>
+          <router-link to="/" :class="{ active: route.path === '/' }">首页</router-link>
+          <router-link to="/search" :class="{ active: route.path === '/search' }">搜索</router-link>
+          <router-link to="/rankings" :class="{ active: route.path === '/rankings' }">排名</router-link>
+          <router-link v-if="authStore.user?.role >= 3" to="/admin" :class="{ active: route.path === '/admin' }">管理</router-link>
         </div>
       </div>
 
       <div class="navbar-right">
-        <a href="/search" class="nav-search-btn" title="搜索">
+        <router-link to="/search" class="nav-search-btn" title="搜索">
           <i class="fa fa-search"></i>
-        </a>
+        </router-link>
 
         <button class="nav-search-btn theme-toggle" @click="toggleTheme" :title="themeLabel">
           <i class="fa" :class="resolvedTheme === 'dark' ? 'fa-sun-o' : 'fa-moon-o'"></i>
@@ -39,7 +39,7 @@
               <i class="fa fa-chevron-down caret"></i>
               <Transition name="dropdown">
                 <div class="dropdown" v-if="menuOpen" @click.stop>
-                  <a href="/profile">个人主页</a>
+                  <router-link to="/profile">个人主页</router-link>
                   <div class="divider"></div>
                   <a @click.prevent="handleLogout" href="#">退出登录</a>
                 </div>
@@ -47,8 +47,8 @@
             </div>
           </template>
           <template v-else>
-            <a href="/login" class="btn-nav">登录</a>
-            <a href="/register" class="btn-nav-primary">注册</a>
+            <router-link to="/login" class="btn-nav">登录</router-link>
+            <router-link to="/register" class="btn-nav-primary">注册</router-link>
           </template>
         </div>
 
@@ -62,18 +62,18 @@
 
     <Transition name="slide">
       <div class="mobile-menu" v-if="mobileOpen" @click.self="mobileOpen = false">
-        <a href="/" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</a>
-        <a href="/search" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</a>
-        <a href="/rankings" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</a>
-        <a v-if="authStore.user?.role >= 3" href="/admin" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</a>
+        <router-link to="/" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</router-link>
+        <router-link to="/search" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</router-link>
+        <router-link to="/rankings" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</router-link>
+        <router-link v-if="authStore.user?.role >= 3" to="/admin" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</router-link>
         <div class="mobile-divider"></div>
         <template v-if="authStore.isLoggedIn">
-          <a href="/profile" class="mobile-nav-sub" @click="mobileOpen = false">个人主页</a>
+          <router-link to="/profile" class="mobile-nav-sub" @click="mobileOpen = false">个人主页</router-link>
           <a href="#" class="mobile-nav-sub" @click.prevent="handleLogout">退出登录</a>
         </template>
         <template v-else>
-          <a href="/login" class="mobile-nav-sub" @click="mobileOpen = false">登录</a>
-          <a href="/register" class="mobile-nav-sub" @click="mobileOpen = false">注册</a>
+          <router-link to="/login" class="mobile-nav-sub" @click="mobileOpen = false">登录</router-link>
+          <router-link to="/register" class="mobile-nav-sub" @click="mobileOpen = false">注册</router-link>
         </template>
       </div>
     </Transition>
