@@ -12,6 +12,7 @@ class User(Base):
     # 邮箱验证
     is_email_verified = Column(Boolean, default=False)
     email_verify_token = Column(String, nullable=True)
+    email_verify_token_expires_at = Column(DateTime(timezone=True), nullable=True)
 
     # Fandom账户绑定
     fandom_username = Column(String, nullable=True)

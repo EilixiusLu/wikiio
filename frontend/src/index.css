@@ -52,9 +52,9 @@
   --space-20: 5rem;      /* 80px */
 
   /* ── 尺寸 ── */
-  --size-input: 2.75rem;  /* 44px 搜索框/按钮高度 */
-  --size-nav: 3.5rem;     /* 56px 导航栏高度 */
-  --size-avatar: 1.75rem; /* 28px 头像尺寸 */
+  --size-input: 2.75rem;  /* 搜索框/按钮高度 */
+  --size-nav: 4rem;     /* 导航栏高度 */
+  --size-avatar: 1.75rem; /* 头像尺寸 */
 
   /* ── 动画时间轴 ── */
   --duration-fast: 150ms;   /* 极小微交互：按钮按下 */

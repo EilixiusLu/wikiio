@@ -125,14 +125,17 @@ onUnmounted(() => {
 
 <style scoped>
 .navbar {
-  position: sticky; top: 0; z-index: 100;
+  position: sticky; top: 0; 
+  z-index: 100;
   background: var(--color-canvas);
   border-bottom: 1px solid var(--color-hairline);
 }
 .navbar-inner {
-  max-width: 1200px; margin: 0 auto; padding: 0 var(--space-8);
+  max-width: 1200px; margin: 0 auto; 
+  padding: 0 var(--space-8);
   height: var(--size-nav);
-  display: flex; align-items: center; justify-content: space-between;
+  display: flex; align-items: center; 
+  justify-content: space-between;
 }
 .navbar-left { display: flex; align-items: center; gap: var(--space-8); }
 .navbar-logo { display: flex; align-items: center; flex-shrink: 0; }

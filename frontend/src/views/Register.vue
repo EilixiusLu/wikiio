@@ -1,10 +1,22 @@
 <template>
   <div class="page">
     <Transition name="fade-up" appear>
-      <div class="card">
+      <!-- 注册成功提示卡片 -->
+      <div class="card" v-if="registeredEmail">
+        <div class="success-icon">✉️</div>
+        <h2>注册成功！</h2>
+        <p class="verify-hint">
+          我们已向 <strong>{{ registeredEmail }}</strong> 发送了一封验证邮件，
+          请在 <strong>24 小时</strong> 内点击邮件中的链接激活账户。
+        </p>
+        <p class="spam-hint">（如未收到，请检查垃圾邮件文件夹）</p>
+        <router-link to="/resend-verification" class="btn-link">重新发送验证邮件</router-link>
+      </div>
+
+      <!-- 注册表单 -->
+      <div class="card" v-else>
         <h2>注册 Wikiio</h2>
         <div v-if="error" class="error">{{ error }}</div>
-        <div v-if="success" class="success">{{ success }}</div>
         <div class="form-group">
           <label>邮箱</label>
           <input v-model="email" type="email" placeholder="your@email.com" />
@@ -28,23 +40,25 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useAuthStore } from '../stores/auth.js'
+import { authAPI } from '../api/index.js'
 
-const authStore = useAuthStore()
 const email = ref('')
 const username = ref('')
 const password = ref('')
 const error = ref('')
-const success = ref('')
 const loading = ref(false)
+const registeredEmail = ref('')
 
 async function handleRegister() {
   error.value = ''
-  success.value = ''
   loading.value = true
   try {
-    await authStore.register(email.value, username.value, password.value)
-    success.value = '注册成功！请前往登录。'
+    const data = await authAPI.register({
+      email: email.value,
+      username: username.value,
+      password: password.value,
+    })
+    registeredEmail.value = data.email
   } catch (err) {
     error.value = err.detail || '注册失败，请稍后再试'
   } finally {
@@ -68,6 +82,7 @@ async function handleRegister() {
   padding: var(--space-10);
   width: 100%;
   max-width: 420px;
+  text-align: center;
 }
 .card h2 {
   font-size: var(--text-xl);
@@ -76,7 +91,7 @@ async function handleRegister() {
   margin-bottom: var(--space-6);
   letter-spacing: -0.02em;
 }
-.form-group { margin-bottom: var(--space-5); }
+.form-group { margin-bottom: var(--space-5); text-align: left; }
 .form-group label {
   display: block;
   font-size: var(--text-sm);
@@ -121,16 +136,30 @@ async function handleRegister() {
   font-size: var(--text-sm);
   margin-bottom: var(--space-4);
 }
-.success {
-  color: var(--color-success);
-  font-size: var(--text-sm);
-  margin-bottom: var(--space-4);
-}
 .card p {
-  text-align: center;
-  margin-top: var(--space-5);
   font-size: var(--text-sm);
   color: var(--color-muted);
+  margin-top: var(--space-5);
 }
 .card p a { color: var(--color-primary); }
+
+.success-icon { font-size: 48px; margin-bottom: var(--space-4); }
+.verify-hint {
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+  line-height: 1.6;
+  margin-top: var(--space-4);
+}
+.spam-hint {
+  font-size: var(--text-xs);
+  color: var(--color-muted);
+  margin-top: var(--space-2);
+}
+.btn-link {
+  display: inline-block;
+  margin-top: var(--space-5);
+  color: var(--color-primary);
+  font-size: var(--text-sm);
+}
+.btn-link:hover { text-decoration: underline; }
 </style>

@@ -47,6 +47,15 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+# 注册成功后返回的数据格式（不再返回 JWT，需验证邮箱后才能登录）
+class RegisterResponse(BaseModel):
+    message: str
+    email: str
+
+# 邮箱验证 / 重发验证邮件后的通用响应
+class MessageResponse(BaseModel):
+    message: str
+
 # 登录成功后返回的数据格式
 class TokenResponse(BaseModel):
     access_token: str

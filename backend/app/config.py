@@ -8,11 +8,17 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     REDIS_URL: str
     SECRET_KEY: str
-    MAIL_USERNAME: str = ""
-    MAIL_PASSWORD: str = ""
-    MAIL_FROM: str = ""
-    MAIL_SERVER: str = ""
     ENVIRONMENT: str = "development"
+
+    # Resend 邮件配置
+    RESEND_API_KEY: str = ""
+    RESEND_FROM_EMAIL: str = "Wikiio <noreply@ewikiio.verniy.site>"
+
+    # 邮箱验证 token 有效期（秒），默认 24 小时
+    EMAIL_VERIFICATION_TOKEN_EXPIRE_SECONDS: int = 86400
+
+    # 前端基础 URL，用于拼接验证链接
+    FRONTEND_BASE_URL: str = "https://wikiio.verniy.site"
 
     # CORS 允许的来源（环境变量用逗号分隔，如 "https://wikiio.verniy.site,http://localhost:5173"）
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
