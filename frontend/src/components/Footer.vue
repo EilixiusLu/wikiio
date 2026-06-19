@@ -10,18 +10,18 @@
         </div>
         <div class="footer-col">
           <h4>关于</h4>
-          <router-link to="/">关于 Wikiio</router-link>
-          <router-link to="/">数据来源</router-link>
-          <router-link to="/">联系方式</router-link>
+          <router-link to="/about">关于 Wikiio</router-link>
+          <router-link to="/datasources">数据来源</router-link>
+          <a href="https://github.com/EilixiusLu/wikiio" target="_blank" rel="noopener">GitHub</a>
         </div>
         <div class="footer-col">
           <h4>Wikiio</h4>
-          <p class="footer-brand">Fandom / Miraheze 维基数据分析与评分平台</p>
+          <p class="footer-brand">Fandom / Miraheze 维基数据分析与评分网站</p>
           <p class="footer-brand">Wikiio仅为维基社群提供非营利性的第三方数据统计与技术分析服务，所有展示文本之版权均遵循原维基授权协议</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <span>&copy; 2026 Wikiio. All rights reserved.</span>
+        <span>&copy; 2026 EilixiusLu / Chhokmah Lu. All rights reserved.</span>
       </div>
     </div>
   </footer>

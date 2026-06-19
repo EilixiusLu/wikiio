@@ -15,6 +15,8 @@ const router = createRouter({
     { path: '/fd-author/:author', component: () => import('../views/FdAuthor.vue') },
     { path: '/page/:id', component: () => import('../views/PageDetail.vue') },
     { path: '/wiki/:siteId', component: () => import('../views/WikiStats.vue') },
+    { path: '/about', component: () => import('../views/About.vue') },
+    { path: '/datasources', component: () => import('../views/DataSources.vue') },
     { path: '/verify-email', component: () => import('../views/VerifyEmail.vue') },
     { path: '/resend-verification', component: () => import('../views/ResendVerification.vue') },
   ],
