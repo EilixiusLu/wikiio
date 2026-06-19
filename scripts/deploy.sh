@@ -44,12 +44,16 @@ docker compose up -d --build \
     redis \
     backend \
     celery-worker \
-    celery-beat
+    celery-beat \
+    nginx
 
 echo "  [2.3] 运行数据库迁移..."
 docker compose exec backend alembic upgrade head
 
-echo "  [2.4] 清理旧镜像..."
+echo "  [2.4] 重载 Nginx..."
+docker compose exec nginx nginx -s reload
+
+echo "  [2.5] 清理旧镜像..."
 docker image prune -f
 
 echo ""
