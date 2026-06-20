@@ -1,4 +1,5 @@
 # 环境变量（不能上传）
+.env
 backend/.env
 frontend/.env
 
