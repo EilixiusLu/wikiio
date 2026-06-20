@@ -9,7 +9,8 @@ import asyncio, asyncpg, os, sys
 
 async def check():
     try:
-        conn = await asyncpg.connect(os.environ['DATABASE_URL'], timeout=2)
+        url = os.environ['DATABASE_URL'].replace('postgresql+asyncpg://', 'postgresql://')
+        conn = await asyncpg.connect(url, timeout=2)
         await conn.close()
         return True
     except Exception:
