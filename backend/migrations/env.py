@@ -20,9 +20,9 @@ config = context.config
 
 # Allow DATABASE_URL environment variable to override alembic.ini's sqlalchemy.url
 # This is used in Docker deployments where the DB hostname differs from localhost.
+# NOTE: We intentionally avoid config.set_main_option() because ConfigParser would
+# interpolate %-encoded characters in the URL (e.g. %40 for @ in passwords).
 database_url = os.getenv("DATABASE_URL")
-if database_url:
-    config.set_main_option("sqlalchemy.url", database_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -53,7 +53,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    url = database_url or config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -83,8 +83,12 @@ async def run_async_migrations():
     """
     创建一个异步引擎并运行迁移
     """
+    # 获取配置 section 并注入 database_url（绕过 ConfigParser 的 % 插值问题）
+    section = config.get_section(config.config_ini_section, {})
+    if database_url:
+        section["sqlalchemy.url"] = database_url
     connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
