@@ -255,8 +255,13 @@ async def miraheze_bind_verify(
                     "utf8": "1",
                 }
             )
+            response.raise_for_status()
             data = response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error("Miraheze API HTTP error: status=%s body=%s", e.response.status_code, e.response.text[:500])
+        raise HTTPException(status_code=503, detail=f"Miraheze API 返回 HTTP {e.response.status_code}")
     except Exception as e:
+        logger.error("Miraheze API connection error: %s", str(e))
         raise HTTPException(status_code=503, detail=f"无法连接到Miraheze API: {str(e)}")
 
     pages = data.get("query", {}).get("pages", {})
