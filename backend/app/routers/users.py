@@ -94,7 +94,10 @@ async def fandom_bind_verify(
     page_title = f"User:{fandom_username}/wikiio-verify"
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        headers = {
+            "User-Agent": "Wikiio/1.0 (Wiki data analysis platform; https://github.com/EilixiusLu/wikiio)"
+        }
+        async with httpx.AsyncClient(timeout=15, headers=headers) as client:
             response = await client.get(api_url, params={
                 "action": "query",
                 "titles": page_title,
@@ -148,7 +151,9 @@ async def get_fandom_avatar(username: str) -> str:
     """通过Fandom services API获取用户头像"""
     try:
         # 先通过MediaWiki API获取用户ID
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=10, headers={
+            "User-Agent": "Wikiio/1.0 (Wiki data analysis platform; https://github.com/EilixiusLu/wikiio)"
+        }) as client:
             r = await client.get(
                 "https://community.fandom.com/api.php",
                 params={
@@ -165,7 +170,9 @@ async def get_fandom_avatar(username: str) -> str:
             user_id = users[0]["userid"]
 
         # 再通过services API获取头像
-        async with httpx.AsyncClient(timeout=10) as client:
+        async with httpx.AsyncClient(timeout=10, headers={
+            "User-Agent": "Wikiio/1.0 (Wiki data analysis platform; https://github.com/EilixiusLu/wikiio)"
+        }) as client:
             r = await client.get(
                 f"https://services.fandom.com/user-attribute/user/{user_id}/attr/avatar",
                 headers={"Accept": "application/json"}
@@ -242,7 +249,10 @@ async def miraheze_bind_verify(
     page_title = f"User:{miraheze_username}/wikiio-verify"
 
     try:
-        async with httpx.AsyncClient(timeout=15) as client:
+        headers = {
+            "User-Agent": "Wikiio/1.0 (Wiki data analysis platform; https://github.com/EilixiusLu/wikiio)"
+        }
+        async with httpx.AsyncClient(timeout=15, headers=headers) as client:
             response = await client.get(
                 "https://meta.miraheze.org/w/api.php",
                 params={
