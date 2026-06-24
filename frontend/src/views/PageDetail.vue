@@ -118,8 +118,32 @@
             </div>
           </div>
 
-          <!-- ── 主栏：Wikitext 源代码 ── -->
-          <div class="card grid-main">
+          <!-- ── 通栏：编辑历史 ── -->
+          <div class="card grid-full">
+            <h2>编辑历史</h2>
+            <div v-if="revLoading" class="loading-sm">加载中...</div>
+            <div v-else class="rev-list">
+              <div
+                class="rev-item"
+                v-for="rev in revisions"
+                :key="rev.rev_id"
+              >
+                <div class="rev-row">
+                  <span class="rev-editor">{{ rev.editor }}</span>
+                  <span class="rev-time">{{ formatDate(rev.timestamp) }}</span>
+                </div>
+                <div class="rev-comment">{{ rev.comment || '（无编辑摘要）' }}</div>
+              </div>
+            </div>
+            <div class="rev-pagination" v-if="revTotal > revPageLimit">
+              <button :disabled="revPageSkip === 0" @click="prevRevPage">上一页</button>
+              <span>第 {{ currentRevPage }} / {{ totalRevPages }} 页</span>
+              <button :disabled="revPageSkip + revPageLimit >= revTotal" @click="nextRevPage">下一页</button>
+            </div>
+          </div>
+
+          <!-- ── 通栏：Wikitext 源代码 ── -->
+          <div class="card grid-full">
             <div class="wikitext-header">
               <h2>Wikitext 源代码</h2>
               <button class="copy-btn" @click="copyWikitext">
@@ -127,27 +151,6 @@
               </button>
             </div>
             <pre class="wikitext">{{ page.wikitext }}</pre>
-          </div>
-
-          <!-- ── 侧栏：编辑历史 ── -->
-          <div class="card grid-side">
-            <h2>编辑历史</h2>
-            <div
-              class="rev-item"
-              v-for="rev in paginatedRevisions"
-              :key="rev.rev_id"
-            >
-              <div class="rev-row">
-                <span class="rev-editor">{{ rev.editor }}</span>
-                <span class="rev-time">{{ formatDate(rev.timestamp) }}</span>
-              </div>
-              <div class="rev-comment">{{ rev.comment || '（无编辑摘要）' }}</div>
-            </div>
-            <div class="rev-pagination" v-if="page.recent_revisions.length > revPageLimit">
-              <button :disabled="revPageSkip === 0" @click="prevRevPage">上一页</button>
-              <span>第 {{ currentRevPage }} / {{ totalRevPages }} 页</span>
-              <button :disabled="revPageSkip + revPageLimit >= page.recent_revisions.length" @click="nextRevPage">下一页</button>
-            </div>
           </div>
         </div>
       </Transition>
@@ -193,7 +196,7 @@ onMounted(async () => {
       try { site.value = await siteAPI.get(page.value.site_id) }
       catch { site.value = null }
     }
-    await Promise.all([loadMyRating(), loadSiteRating()])
+    await Promise.all([loadMyRating(), loadSiteRating(), loadRevisions()])
   } catch { page.value = null }
   finally { loading.value = false }
 })
@@ -256,28 +259,38 @@ async function loadSiteRating() {
   } catch {}
 }
 
-/* ── 编辑历史分页 ── */
+/* ── 编辑历史分页（API 全量分页） ── */
 const revPageLimit = 10
 const revPageSkip = ref(0)
-
-const paginatedRevisions = computed(() =>
-  page.value?.recent_revisions?.slice(revPageSkip.value, revPageSkip.value + revPageLimit) || []
-)
+const revTotal = ref(0)
+const revisions = ref([])
+const revLoading = ref(false)
 
 const currentRevPage = computed(() => Math.floor(revPageSkip.value / revPageLimit) + 1)
 
 const totalRevPages = computed(() =>
-  Math.ceil((page.value?.recent_revisions?.length || 0) / revPageLimit)
+  Math.ceil((revTotal.value || 0) / revPageLimit)
 )
+
+async function loadRevisions() {
+  revLoading.value = true
+  try {
+    const data = await pageAPI.getRevisions(route.params.id, revPageSkip.value, revPageLimit)
+    revisions.value = data.revisions
+    revTotal.value = data.total
+  } finally {
+    revLoading.value = false
+  }
+}
 
 function prevRevPage() {
   revPageSkip.value = Math.max(0, revPageSkip.value - revPageLimit)
+  loadRevisions()
 }
 
 function nextRevPage() {
-  if (page.value) {
-    revPageSkip.value += revPageLimit
-  }
+  revPageSkip.value += revPageLimit
+  loadRevisions()
 }
 </script>
 
@@ -474,11 +487,19 @@ function nextRevPage() {
 }
 
 /* ── 编辑历史 ── */
-.rev-item {
-  padding: var(--space-4) 0;
-  border-bottom: 1px solid var(--color-hairline);
+.rev-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
 }
-.rev-item:last-child { border-bottom: none; }
+.rev-item {
+  background: var(--color-canvas);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4);
+  transition: background-color var(--duration-base) var(--ease-smooth);
+}
+.rev-item:hover { background-color: var(--color-highlight); }
 .rev-row {
   display: flex; justify-content: space-between;
   margin-bottom: var(--space-1);
@@ -551,6 +572,11 @@ function nextRevPage() {
 
   .ratings-row {
     flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .rev-list {
+    grid-template-columns: 1fr;
     gap: var(--space-4);
   }
 }

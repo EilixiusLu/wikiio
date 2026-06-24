@@ -408,6 +408,50 @@ async def get_page(
         ]
     }
 
+@router.get("/{page_id}/revisions")
+async def get_page_revisions(
+    page_id: int,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """获取指定页面的全部编辑历史（分页）"""
+    result = await db.execute(select(Page).where(Page.id == page_id))
+    page = result.scalar_one_or_none()
+    if not page:
+        raise HTTPException(status_code=404, detail="页面不存在")
+
+    # 总条数
+    count_result = await db.execute(
+        select(func.count(Revision.id))
+        .where(Revision.page_id == page.id)
+    )
+    total = count_result.scalar() or 0
+
+    # 分页查询
+    rev_result = await db.execute(
+        select(Revision)
+        .where(Revision.page_id == page.id)
+        .order_by(desc(Revision.timestamp))
+        .offset(skip)
+        .limit(limit)
+    )
+    revisions = rev_result.scalars().all()
+
+    return {
+        "total": total,
+        "revisions": [
+            {
+                "rev_id": r.rev_id,
+                "editor": r.editor,
+                "comment": r.comment,
+                "size": r.size,
+                "timestamp": r.timestamp,
+            }
+            for r in revisions
+        ]
+    }
+
 @router.get("/{page_id}/site-rating")
 @cached(ttl=600, key_prefix="page:{page_id}:site-rating")
 async def get_site_rating(

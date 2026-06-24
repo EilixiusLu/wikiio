@@ -56,6 +56,7 @@ export const siteAPI = {
 export const pageAPI = {
   list: (params) => api.get('/pages/', { params }),
   get: (id) => api.get(`/pages/${id}`),
+  getRevisions: (id, skip = 0, limit = 10) => api.get(`/pages/${id}/revisions`, { params: { skip, limit } }),
   stats: (siteId) => api.get('/pages/stats', { params: { site_id: siteId } }),
   topAuthors: (siteId, limit = 10) => api.get('/pages/top-authors', { params: { site_id: siteId, limit } }),
   count: (siteId) => api.get('/pages/count', { params: { site_id: siteId } }),

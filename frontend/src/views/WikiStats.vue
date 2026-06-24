@@ -301,7 +301,7 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: var(--space-4); }
+  .stats-grid { grid-template-columns: 1fr; gap: var(--space-4); }
   .main-grid { grid-template-columns: 1fr; }
 }
 </style>
