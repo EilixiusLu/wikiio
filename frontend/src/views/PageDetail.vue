@@ -121,6 +121,9 @@
           <!-- ── 通栏：编辑历史 ── -->
           <div class="card grid-full">
             <h2>编辑历史</h2>
+            <div class="chart-wrap" v-if="revisions.length">
+              <EditTrendChart :chartData="editTrendData" />
+            </div>
             <div v-if="revLoading" class="loading-sm">加载中...</div>
             <div v-else class="rev-list">
               <div
@@ -165,6 +168,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { pageAPI, siteAPI, ratingAPI } from '../api/index.js'
 import { useAuthStore } from '../stores/auth.js'
+import EditTrendChart from '../components/EditTrendChart.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -292,6 +296,19 @@ function nextRevPage() {
   revPageSkip.value += revPageLimit
   loadRevisions()
 }
+
+const editTrendData = computed(() => {
+  const map = {}
+  for (const rev of revisions.value) {
+    if (!rev.timestamp) continue
+    const d = new Date(rev.timestamp)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    map[key] = (map[key] || 0) + 1
+  }
+  return Object.entries(map)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, count]) => ({ date, count }))
+})
 </script>
 
 <style scoped>
@@ -487,6 +504,10 @@ function nextRevPage() {
 }
 
 /* ── 编辑历史 ── */
+.chart-wrap {
+  height: 240px;
+  margin-bottom: var(--space-6);
+}
 .rev-list {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
