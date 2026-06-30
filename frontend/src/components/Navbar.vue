@@ -11,6 +11,7 @@
           <router-link to="/" :class="{ active: route.path === '/' }">首页</router-link>
           <router-link to="/search" :class="{ active: route.path === '/search' }">搜索</router-link>
           <router-link to="/rankings" :class="{ active: route.path === '/rankings' }">排名</router-link>
+          <router-link to="/tools" :class="{ active: route.path.startsWith('/tools') }">工具</router-link>
           <router-link v-if="authStore.user?.role >= 3" to="/admin" :class="{ active: route.path === '/admin' }">管理</router-link>
         </div>
       </div>
@@ -65,6 +66,7 @@
         <router-link to="/" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/' }">首页</router-link>
         <router-link to="/search" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/search' }">搜索</router-link>
         <router-link to="/rankings" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/rankings' }">排名</router-link>
+        <router-link to="/tools" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path.startsWith('/tools') }">工具</router-link>
         <router-link v-if="authStore.user?.role >= 3" to="/admin" class="mobile-nav-main" @click="mobileOpen = false" :class="{ active: route.path === '/admin' }">管理</router-link>
         <div class="mobile-divider"></div>
         <template v-if="authStore.isLoggedIn">
